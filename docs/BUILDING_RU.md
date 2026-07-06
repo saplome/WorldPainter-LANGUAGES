@@ -62,8 +62,6 @@ https://www.worldpainter.net/maven-repo/
 
 Это ожидаемо. `WPGUI-2.27.0.jar` не является самодостаточным executable jar и требует внешнего classpath.
 
-Подробности: [PACKAGING_NOTES.md](PACKAGING_NOTES.md).
-
 ### Не найден JDK 17 toolchain
 
 Убедитесь, что установлен JDK 17 и Maven видит правильный `JAVA_HOME`.

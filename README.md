@@ -107,11 +107,7 @@ mvn -pl WPGUI exec:exec
 powershell -ExecutionPolicy Bypass -File .\scripts\build-windows-installer.ps1 -BuildInstaller
 ```
 
-Подробнее:
-
-- [BUILDING_RU.md](docs/BUILDING_RU.md)
-- [PACKAGING_NOTES.md](docs/PACKAGING_NOTES.md)
-- [RELEASE_CHECKLIST.md](docs/RELEASE_CHECKLIST.md)
+Подробнее: [BUILDING_RU.md](docs/BUILDING_RU.md)
 
 ## Структура
 
@@ -120,7 +116,7 @@ WPCore/               ядро WorldPainter
 WPGUI/                графический интерфейс
 WPDynmapPreviewer/    dynmap previewer
 assets/               иконки WorldPainter RU
-docs/                 сборка, упаковка и release checklist
+docs/                 сборка из исходников
 scripts/              сборка installer
 ```
 
@@ -130,15 +126,6 @@ scripts/              сборка installer
 - Modern UI, FlatLaf, dark/light themes и новая архитектура локализации пока не входят в релиз.
 - Названия платформ Minecraft, версии Minecraft, форматы и расширения файлов намеренно не переводятся.
 - Некоторые редкие аварийные сценарии требуют ручной проверки на реальной Windows-системе.
-
-## Roadmap
-
-- **Phase 1:** полная русификация.
-- **Phase 2:** новая архитектура локализации.
-- **Phase 3:** Modern UI, FlatLaf, dark/light themes, Windows 11 style.
-- **Phase 4:** новые возможности.
-
-Подробнее: [ROADMAP.md](ROADMAP.md)
 
 ## Благодарности
 
