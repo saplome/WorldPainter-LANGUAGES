@@ -32,9 +32,11 @@ public final class DonationDialog extends WorldPainterDialog {
         config = Configuration.getInstance();
         
         initComponents();
+        scaleHeaderImage();
         
         // Fix JTextArea font, which uses a butt ugly non-proportional font by default on Windows
         jTextArea1.setFont(UIManager.getFont("TextField.font").deriveFont(UIManager.getFont("TextField.font").getSize() + 6f));
+        jTextArea1.setRows(5);
         
         rootPane.setDefaultButton(buttonDonate);
         pack();
@@ -97,6 +99,15 @@ public final class DonationDialog extends WorldPainterDialog {
             ok();
         } catch (MalformedURLException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    private void scaleHeaderImage() {
+        Icon icon = jLabel1.getIcon();
+        if (icon instanceof ImageIcon) {
+            int height = Math.round(HEADER_IMAGE_WIDTH * (icon.getIconHeight() / (float) icon.getIconWidth()));
+            Image image = ((ImageIcon) icon).getImage().getScaledInstance(HEADER_IMAGE_WIDTH, height, Image.SCALE_SMOOTH);
+            jLabel1.setIcon(new ImageIcon(image));
         }
     }
 
@@ -251,5 +262,6 @@ public final class DonationDialog extends WorldPainterDialog {
 
     private final Configuration config;
     
+    private static final int HEADER_IMAGE_WIDTH = 760;
     private static final long serialVersionUID = 1L;
 }
