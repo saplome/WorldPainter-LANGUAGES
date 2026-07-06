@@ -405,9 +405,9 @@ public final class App extends JFrame implements BrushControl,
             }
 
             if (! PlatformManager.getInstance().getAllPlatforms().contains(world.getPlatform())) {
-                beepAndShowWarning(this, "This world is set to a map format (\"" + world.getPlatform().displayName + "\") that is unknown and unsupported.\n" +
-                        "It cannot be Exported without first changing the format.\n" +
-                        "It is most likely supported by a plugin that is not installed or could not be loaded.", "Unknown Map Format");
+                beepAndShowWarning(this,
+                        MessageFormat.format(WPI18n.s("ui.mapFormat.unknown.message"), world.getPlatform().displayName),
+                        WPI18n.s("ui.mapFormat.unknown.title"));
             }
         }
     }
@@ -530,9 +530,7 @@ public final class App extends JFrame implements BrushControl,
             // Legacy: if this is an older world with an overlay enabled, warn the user that it may be incorrectly
             // located (we used to offer to fix this, but this should be exceedingly rare).
             if (dimension.isFixOverlayCoords()) {
-                beepAndShowWarning(this, "This world was created in an older version of WorldPainter\n" +
-                        "in which the overlay offsets were not stored correctly.\n" +
-                        "You may need to fix the position of your overlay.", "Check Overlay Positioning");
+                beepAndShowWarning(this, WPI18n.s("ui.overlay.positionWarning.message"), WPI18n.s("ui.overlay.positionWarning.title"));
                 dimension.setFixOverlayCoords(false);
             }
 
@@ -949,10 +947,7 @@ public final class App extends JFrame implements BrushControl,
                 && (newWorld.getMetadata() != null)
                 && newWorld.getMetadata().containsKey(METADATA_KEY_WP_VERSION)
                 && (! ((String) newWorld.getMetadata().get(METADATA_KEY_WP_VERSION)).contains("SNAPSHOT"))) {
-            beepAndShowWarning(this, "You are running a snapshot version of WorldPainter.\n" +
-                    "This file was last saved by a regular version of WorldPainter.\n" +
-                    "If you save the file with this version, you may no longer be able to open it\n" +
-                    "using a regular version of WorldPainter!", "Loading Non-snapshot World");
+            beepAndShowWarning(this, WPI18n.s("ui.snapshot.loadingNonSnapshot.message"), WPI18n.s("ui.snapshot.loadingNonSnapshot.title"));
         }
 
         Set<Warning> warnings = newWorld.getWarnings();

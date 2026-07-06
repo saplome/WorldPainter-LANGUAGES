@@ -33,6 +33,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
+import java.text.MessageFormat;
 import java.util.List;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -198,21 +199,21 @@ public class ExportWorldDialog extends WPDialogWithPaintSelection {
             if (! nameOnlyMaterials.isEmpty()) {
                 final StringBuilder sb = new StringBuilder();
                 sb.append("<html>");
-                sb.append("<p>The world cannot be exported in format ").append(platform.displayName).append(" because it contains the following incompatible block types:");
-                sb.append("<table><tr><th align='left'>Block Type</th><th align='left'>Source</th></tr>");
+                sb.append(MessageFormat.format(WPI18n.s("ui.export.incompatibleNameBlocks.message"), platform.displayName));
+                sb.append("<table><tr><th align='left'>").append(WPI18n.s("ui.export.incompatibleNameBlocks.blockType"))
+                        .append("</th><th align='left'>").append(WPI18n.s("ui.export.incompatibleNameBlocks.source")).append("</th></tr>");
                 nameOnlyMaterials.forEach((name, sources) ->
                         sb.append("<tr><td>").append(name).append("</td><td>").append(String.join(", ", sources)).append("</td></tr>"));
                 sb.append("</table>");
-                beepAndShowError(this, sb.toString(), "Map Format Not Compatible");
+                beepAndShowError(this, sb.toString(), WPI18n.s("ui.export.incompatibleMapFormat.title"));
                 return false;
             }
         }
         final String incompatibilityReason = PlatformManager.getInstance().getPlatformProvider(platform).isCompatible(platform, world);
         if (incompatibilityReason != null) {
-            beepAndShowError(this, String.format(/* language=HTML */ "<html>" +
-                    "<p>The world cannot be exported in format %s because it is not compatible:</p>" +
-                    "<p>%s</p>" +
-                    "</html>", platform.displayName, incompatibilityReason), "Map Format Not Compatible");
+            beepAndShowError(this,
+                    MessageFormat.format(WPI18n.s("ui.export.incompatibleMapFormat.message"), platform.displayName, incompatibilityReason),
+                    WPI18n.s("ui.export.incompatibleMapFormat.title"));
             return false;
         }
         return true;
@@ -246,17 +247,17 @@ public class ExportWorldDialog extends WPDialogWithPaintSelection {
             final Generator generatorType = editor.getSelectedGeneratorType();
             final Dimension dimension = editor.getDimension();
             if ((editor.isPopulateSelected() || dimension.getAllLayers(true).contains(Populate.INSTANCE)) && (! platform.capabilities.contains(POPULATE))) {
-                sb.append("<li>Population not supported for<br>map format " + platform.displayName + "; it will not have an effect");
+                sb.append(MessageFormat.format(WPI18n.s("ui.export.warning.populationNotSupported"), platform.displayName));
                 showWarning = true;
             } else if (exportAllDimensions || (selectedDimension == dimension.getAnchor().dim)) {
                 // The dimension is going to be exported
                 if ((generatorType == Generator.FLAT) && (editor.isPopulateSelected() || dimension.getAllLayers(true).contains(Populate.INSTANCE))) {
-                    sb.append("<li>The Superflat world type is selected and Populate is in use.<br>Minecraft will <em>not</em> populate generated chunks for Superflat maps.");
+                    sb.append(WPI18n.s("ui.export.warning.superflatPopulate"));
                     showWarning = true;
                 }
             }
             if ((generatorType != null) && (! platform.supportedGenerators.contains(generatorType))) {
-                sb.append("<li>Map format " + platform.displayName + " does not support world type " + generatorType.getDisplayName() + ".<br>The world type will be reset to " + platform.supportedGenerators.get(0).getDisplayName() + ".");
+                sb.append(MessageFormat.format(WPI18n.s("ui.export.warning.generatorNotSupported"), platform.displayName, generatorType.getDisplayName(), platform.supportedGenerators.get(0).getDisplayName()));
                 editor.setSelectedGeneratorType(platform.supportedGenerators.get(0));
                 showWarning = true;
             }
@@ -271,7 +272,7 @@ public class ExportWorldDialog extends WPDialogWithPaintSelection {
                 }
             }
             if (! spawnInSelection) {
-                sb.append("<li>The spawn point is not inside the selected area.<br>It will temporarily be moved to the middle of the selected area.");
+                sb.append(WPI18n.s("ui.export.warning.spawnOutsideSelection"));
                 showWarning = true;
             }
         }
@@ -285,22 +286,22 @@ public class ExportWorldDialog extends WPDialogWithPaintSelection {
         }
         if (disabledLayerCount > 0) {
             if (disabledLayerCount == 1) {
-                sb.append("<li>There are disabled custom layers!<br>One layer is not going to be exported.");
+                sb.append(WPI18n.s("ui.export.warning.disabledLayer.single"));
             } else {
-                sb.append("<li>There are disabled custom layers!<br>" + disabledLayerCount + " layers are not going to be exported.");
+                sb.append(MessageFormat.format(WPI18n.s("ui.export.warning.disabledLayer.multiple"), disabledLayerCount));
             }
             showWarning = showWarning || (! disableDisabledLayersWarning);
         }
         for (int i = 0; i < dataPacksListModel.size(); i++) {
             final File dataPackFile = dataPacksListModel.getElementAt(i);
             if (! dataPackFile.exists()) {
-                sb.append("<li>Data pack file " + dataPackFile.getName() + " cannot be found.<br>It will not be installed.");
+                sb.append(MessageFormat.format(WPI18n.s("ui.export.warning.dataPackMissing"), dataPackFile.getName()));
                 showWarning = true;
             } else if (! dataPackFile.isFile()) {
-                sb.append("<li>Data pack file " + dataPackFile.getName() + " is not a regular file.<br>It will not be installed.");
+                sb.append(MessageFormat.format(WPI18n.s("ui.export.warning.dataPackNotFile"), dataPackFile.getName()));
                 showWarning = true;
             } else if (! dataPackFile.canRead()) {
-                sb.append("<li>Data pack file " + dataPackFile.getName() + " is not accessible.<br>It will not be installed.");
+                sb.append(MessageFormat.format(WPI18n.s("ui.export.warning.dataPackNotReadable"), dataPackFile.getName()));
                 showWarning = true;
             }
         }
@@ -311,17 +312,13 @@ public class ExportWorldDialog extends WPDialogWithPaintSelection {
                 logger.warn("Skipping previously acknowledged warnings for this world: {}", previouslyAcknowledgedWarnings);
             } else {
                 DesktopUtils.beep();
-                String text = "<html>Please confirm that you want to export the world<br>" +
-                        "notwithstanding the following warnings:<br>"
-                        + warnings
-                        + "Do you want to continue with the export?";
+                String text = MessageFormat.format(WPI18n.s("ui.export.warning.header"), warnings);
                 if (inhibitWarnings) {
-                    text += "<br>" +
-                            "<br>" +
-                            "<strong>Note:</strong> on the next Test Export this screen will be skipped<br>" +
-                            "if the warnings are identical.</html>";
+                    text += WPI18n.s("ui.export.warning.testExportNote");
+                } else {
+                    text += WPI18n.s("ui.export.warning.footer");
                 }
-                if (JOptionPane.showConfirmDialog(this, text, org.pepsoft.worldpainter.WPI18n.s("ui.h.667a99bd4d"), YES_NO_OPTION, JOptionPane.WARNING_MESSAGE) != JOptionPane.YES_OPTION) {
+                if (JOptionPane.showConfirmDialog(this, text, WPI18n.s("ui.export.warning.title"), YES_NO_OPTION, JOptionPane.WARNING_MESSAGE) != JOptionPane.YES_OPTION) {
                     previouslyAcknowledgedWarnings = null;
                     warningsForWorld = null;
                     return;
@@ -491,7 +488,7 @@ public class ExportWorldDialog extends WPDialogWithPaintSelection {
 
             @Override
             public String getDescription() {
-                return "Data packs (*.zip)";
+                return WPI18n.s("ui.export.dataPackFilesFilter");
             }
         });
         if (dataPackFile != null) {

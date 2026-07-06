@@ -37,6 +37,7 @@ import java.awt.event.MouseWheelListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -392,9 +393,9 @@ public class ImportHeightMapDialog extends WorldPainterDialog implements Documen
                 selectDefaultVerticalScaling(false);
 
                 if (heightMap.isFloatingPoint()) {
-                    labelImageDimensions.setText(String.format("Image size: %,d x %,d, %d bits, lowest value: %,f, highest value: %,f", width, height, bitDepth, imageLowValue, imageHighValue));
+                    labelImageDimensions.setText(String.format(WPI18n.s("ui.importHeightMap.imageSize.floating"), width, height, bitDepth, imageLowValue, imageHighValue));
                 } else {
-                    labelImageDimensions.setText(String.format("Image size: %,d x %,d, %d bits, lowest value: %,d, highest value: %,d", width, height, bitDepth, Math.round(imageLowValue), Math.round(imageHighValue)));
+                    labelImageDimensions.setText(String.format(WPI18n.s("ui.importHeightMap.imageSize.integer"), width, height, bitDepth, Math.round(imageLowValue), Math.round(imageHighValue)));
                 }
                 updateWorldDimensions();
                 updatePreview(true);
@@ -402,7 +403,7 @@ public class ImportHeightMapDialog extends WorldPainterDialog implements Documen
         } catch (IOException e) {
             logger.error("I/O error loading image " + selectedFile, e);
             labelImageDimensions.setForeground(Color.RED);
-            labelImageDimensions.setText(String.format("I/O error loading image (message: %s)!", e.getMessage()));
+            labelImageDimensions.setText(String.format(WPI18n.s("ui.importHeightMap.imageLoadIoError"), e.getMessage()));
             selectedFile = null;
         } catch (IllegalArgumentException e) {
             logger.error("IllegalArgumentException loading image " + selectedFile, e);
@@ -448,10 +449,12 @@ public class ImportHeightMapDialog extends WorldPainterDialog implements Documen
         final float importScale = (float) spinnerScale.getValue();
         final int scaledWidth = Math.round(image.getWidth() * (importScale / 100));
         final int scaledHeight = Math.round(image.getHeight() * (importScale / 100));
-        labelWorldDimensions.setText(org.pepsoft.worldpainter.WPI18n.s("ui.66aa27c63b") + INT_NUMBER_FORMAT.format(scaledWidth) + " x " + INT_NUMBER_FORMAT.format(scaledHeight) + " blocks");
+        labelWorldDimensions.setText(MessageFormat.format(WPI18n.s("ui.importHeightMap.scaledSize"),
+                INT_NUMBER_FORMAT.format(scaledWidth), INT_NUMBER_FORMAT.format(scaledHeight)));
         final int exportedWidth = Math.round(scaledWidth * dimensionScale);
         final int exportedHeight = Math.round(scaledHeight * dimensionScale);
-        labelExportedSize.setText(INT_NUMBER_FORMAT.format(exportedWidth) + " x " + INT_NUMBER_FORMAT.format(exportedHeight) + " blocks");
+        labelExportedSize.setText(MessageFormat.format(WPI18n.s("ui.importHeightMap.exportedSize"),
+                INT_NUMBER_FORMAT.format(exportedWidth), INT_NUMBER_FORMAT.format(exportedHeight)));
         String westEastTime = blocksToWalkingTime(exportedWidth);
         String northSouthTime = blocksToWalkingTime(exportedHeight);
         if (westEastTime.equals(northSouthTime)) {

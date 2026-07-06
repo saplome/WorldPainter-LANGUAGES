@@ -11,6 +11,7 @@ import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.HeightMap;
 import org.pepsoft.worldpainter.Terrain;
 import org.pepsoft.worldpainter.Tile;
+import org.pepsoft.worldpainter.WPI18n;
 import org.pepsoft.worldpainter.heightMaps.BitmapHeightMap;
 import org.pepsoft.worldpainter.history.HistoryEntry;
 import org.pepsoft.worldpainter.layers.Annotations;
@@ -22,6 +23,7 @@ import java.awt.image.BufferedImage;
 import java.awt.image.IndexColorModel;
 import java.awt.image.Raster;
 import java.io.File;
+import java.text.MessageFormat;
 import java.util.Set;
 
 import static java.awt.image.BufferedImage.*;
@@ -80,7 +82,7 @@ public class MaskImporter {
                         default:
                             inputType = UNSUPPORTED;
                             imageMaxValue = -1;
-                            unsupportedReason = "Grey scale images of " + sampleSize + " bits not yet supported";
+                            unsupportedReason = MessageFormat.format(WPI18n.s("ui.mask.unsupportedGreyScaleBits"), sampleSize);
                             break;
                     }
                     break;
@@ -310,7 +312,7 @@ outer:          for (int x = 0; x < width; x++) {
     public String getScalingNotSupportedReason() {
         final int imageType = image.getType();
         if ((image.getColorModel() instanceof IndexColorModel) && (imageType != TYPE_BYTE_BINARY) && (imageType != TYPE_BYTE_INDEXED)) {
-            return "Scaling not supported for indexed images of type " + imageType;
+            return MessageFormat.format(WPI18n.s("ui.mask.scalingIndexedUnsupported"), imageType);
         }
         return null;
     }
@@ -378,7 +380,7 @@ outer:          for (int x = 0; x < width; x++) {
                         return new PossibleMappingsResult(setTerrainValue(applyToTerrainType));
                     } else {
                         // One-bit mask to terrain
-                        return new PossibleMappingsResult("Pick one terrain type to apply one-bit mask to");
+                        return new PossibleMappingsResult(WPI18n.s("ui.mask.reason.pickTerrainOneBit"));
                     }
                 } else if (applyToLayer != null) {
                     if (applyToLayer.discrete) {
@@ -388,7 +390,7 @@ outer:          for (int x = 0; x < width; x++) {
                             return new PossibleMappingsResult(setLayerValue(applyToLayer, applyToLayerValue));
                         } else {
                             // No value selected
-                            return new PossibleMappingsResult("Pick one discrete layer value to apply one-bit mask to");
+                            return new PossibleMappingsResult(WPI18n.s("ui.mask.reason.pickDiscreteLayerOneBit"));
                         }
                     } else if (applyToLayer.getDataSize().maxValue == 1) {
                         // One-bit mask to one-bit layer
@@ -400,7 +402,7 @@ outer:          for (int x = 0; x < width; x++) {
                             return new PossibleMappingsResult(setLayerValue(applyToLayer, applyToLayerValue));
                         } else {
                             // No value selected
-                            return new PossibleMappingsResult("Pick one layer intensity to apply one-bit mask to");
+                            return new PossibleMappingsResult(WPI18n.s("ui.mask.reason.pickLayerIntensityOneBit"));
                         }
                     }
                 }
@@ -417,7 +419,7 @@ outer:          for (int x = 0; x < width; x++) {
                         if (imageHighValue < Terrain.VALUES.length) {
                             return new PossibleMappingsResult(mapToTerrain());
                         } else {
-                            return new PossibleMappingsResult("Mask contains values higher than the highest terrain type index (" + (Terrain.VALUES.length - 1) + ")");
+                            return new PossibleMappingsResult(MessageFormat.format(WPI18n.s("ui.mask.reason.terrainValueTooHigh"), Terrain.VALUES.length - 1));
                         }
                     }
                 } else if (applyToLayer != null) {
@@ -431,7 +433,7 @@ outer:          for (int x = 0; x < width; x++) {
                             if (imageHighValue <= applyToLayer.dataSize.maxValue) {
                                 return new PossibleMappingsResult(mapToLayer(applyToLayer));
                             } else {
-                                return new PossibleMappingsResult("Mask contains values higher than the highest layer value (" + applyToLayer.dataSize.maxValue + ")");
+                                return new PossibleMappingsResult(MessageFormat.format(WPI18n.s("ui.mask.reason.layerValueTooHigh"), applyToLayer.dataSize.maxValue));
                             }
                         }
                     } else if (applyToLayer.getDataSize().maxValue == 1) {
@@ -464,7 +466,7 @@ outer:          for (int x = 0; x < width; x++) {
                         // Continuous greyscale mask to one terrain type
                         return new PossibleMappingsResult(setTerrainValue(applyToTerrainType).ditheredActualRange(), setTerrainValue(applyToTerrainType).ditheredFullRange(), setTerrainValue(applyToTerrainType).threshold());
                     } else {
-                        return new PossibleMappingsResult("Pick one terrain type to apply floating point mask to");
+                        return new PossibleMappingsResult(WPI18n.s("ui.mask.reason.pickTerrainFloating"));
                     }
                 } else if (applyToLayer != null) {
                     if (applyToLayer.discrete) {
@@ -474,7 +476,7 @@ outer:          for (int x = 0; x < width; x++) {
                             return new PossibleMappingsResult(setLayerValue(applyToLayer, applyToLayerValue).ditheredActualRange(), setLayerValue(applyToLayer, applyToLayerValue).ditheredFullRange(), setLayerValue(applyToLayer, applyToLayerValue).threshold());
                         } else {
                             // No value selected
-                            return new PossibleMappingsResult("Pick one discrete layer value type to apply floating point mask to");
+                            return new PossibleMappingsResult(WPI18n.s("ui.mask.reason.pickDiscreteLayerFloating"));
                         }
                     } else if (applyToLayer.getDataSize().maxValue == 1) {
                         // Continuous greyscale mask to one-bit layer
@@ -503,12 +505,12 @@ outer:          for (int x = 0; x < width; x++) {
                 if (Annotations.INSTANCE.equals(applyToLayer) && (applyToLayerValue == null)) {
                     return new PossibleMappingsResult(colourToAnnotations(), colourToAnnotations().ditheredActualRange());
                 } else {
-                    return new PossibleMappingsResult("Colour mask can only be applied to Annotations layer");
+                    return new PossibleMappingsResult(WPI18n.s("ui.mask.reason.colourAnnotationsOnly"));
                 }
             default:
-                return new PossibleMappingsResult("Bit depth or format of mask not supported");
+                return new PossibleMappingsResult(WPI18n.s("ui.mask.reason.unsupportedBitDepth"));
         }
-        return new PossibleMappingsResult("No target selected");
+        return new PossibleMappingsResult(WPI18n.s("ui.mask.reason.noTarget"));
     }
 
     public Terrain getApplyToTerrainType() {

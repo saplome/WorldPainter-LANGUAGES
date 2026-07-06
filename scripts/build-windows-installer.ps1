@@ -10,8 +10,8 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 $ProductName = 'WorldPainter RU'
-$ProductVersion = '2.27.0-r1'
-$WindowsInstallerVersion = '2.27.1'
+$ProductVersion = '2.27.0-r2'
+$WindowsInstallerVersion = '2.27.2'
 $WindowsUpgradeUuid = 'd5984a7f-cb32-48c8-b6f1-97a3c4c0da44'
 $ProductVendor = 'WorldPainter RU'
 $ProductDescription = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String('0KDRg9GB0LjRhNC40YbQuNGA0L7QstCw0L3QvdCw0Y8g0LLQtdGA0YHQuNGPIFdvcmxkUGFpbnRlciAyLjI3LjA='))

@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.text.MessageFormat;
 import java.text.NumberFormat;
 import java.util.List;
 import java.util.*;
@@ -316,22 +317,17 @@ public class Bo2LayerEditor extends AbstractLayerEditor<Bo2Layer> implements Lis
                 settingsChanged();
                 refreshLeafDecaySettings();
                 if (checkForNameOnlyMaterials && (! nameOnlyMaterialsNames.isEmpty())) {
-                    String message;
+                    final String materialNames;
                     if (nameOnlyMaterialsNames.size() > 4) {
-                        message = format("One or more added objects contain block types that are\n" +
-                                "incompatible with the current map format (%s):\n" +
-                                "%s and %d more\n" +
-                                "You will not be able to export this world in this format if you use this layer.",
-                                platform.displayName, String.join(", ", new ArrayList<>(nameOnlyMaterialsNames).subList(0, 3)),
+                        materialNames = MessageFormat.format(WPI18n.s("ui.bo2.incompatibleMaterials.more"),
+                                String.join(", ", new ArrayList<>(nameOnlyMaterialsNames).subList(0, 3)),
                                 nameOnlyMaterialsNames.size() - 3);
                     } else {
-                        message = format("One or more added objects contain block types that are\n" +
-                                "incompatible with the current map format (%s):\n" +
-                                "%s\n" +
-                                "You will not be able to export this world in this format if you use this layer.",
-                                platform.displayName, String.join(", ", nameOnlyMaterialsNames));
+                        materialNames = String.join(", ", nameOnlyMaterialsNames);
                     }
-                    beepAndShowWarning(this, message, "Map Format Not Compatible");
+                    beepAndShowWarning(this,
+                            MessageFormat.format(WPI18n.s("ui.bo2.incompatibleMaterials.message"), platform.displayName, materialNames),
+                            WPI18n.s("ui.bo2.incompatibleMaterials.title"));
                 }
             }
         }
@@ -415,17 +411,17 @@ public class Bo2LayerEditor extends AbstractLayerEditor<Bo2Layer> implements Lis
         }
         if ((noFiles.length() > 0) || (notFound.length() > 0) || (errors.length() > 0)) {
             StringBuilder message = new StringBuilder();
-            message.append("Not all files could be reloaded!\n");
+            message.append(WPI18n.s("ui.bo2.reloadFailed.header"));
             if (noFiles.length() > 0) {
-                message.append("\nThe following objects came from an old layer and have no filename stored:\n");
+                message.append(WPI18n.s("ui.bo2.reloadFailed.noFiles"));
                 message.append(noFiles);
             }
             if (notFound.length() > 0) {
-                message.append("\nThe following files were missing or not accessible:\n");
+                message.append(WPI18n.s("ui.bo2.reloadFailed.notFound"));
                 message.append(notFound);
             }
             if (errors.length() > 0) {
-                message.append("\nThe following files experienced I/O errors while loading:\n");
+                message.append(WPI18n.s("ui.bo2.reloadFailed.ioErrors"));
                 message.append(errors);
             }
             JOptionPane.showMessageDialog(this, message, org.pepsoft.worldpainter.WPI18n.s("ui.h.11b3fed838"), JOptionPane.ERROR_MESSAGE);

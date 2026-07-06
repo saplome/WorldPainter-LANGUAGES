@@ -279,20 +279,20 @@ public class ImportMaskDialog extends WorldPainterDialog implements DocumentList
                     spinnerScale.setToolTipText(null);
                     labelImageDimensions.setIcon(null);
                     if (inputType == COLOUR) {
-                        labelImageDimensions.setText(String.format("Image size: %,d x %,d, colour, %d bits", width, height, image.getSampleModel().getSampleSize(0)));
+                        labelImageDimensions.setText(String.format(org.pepsoft.worldpainter.WPI18n.s("ui.mask.imageSize.colour"), width, height, image.getSampleModel().getSampleSize(0)));
                     } else if (inputType == ONE_BIT_GREY_SCALE) {
-                        labelImageDimensions.setText(String.format("Image size: %,d x %,d, black and white", width, height));
+                        labelImageDimensions.setText(String.format(org.pepsoft.worldpainter.WPI18n.s("ui.mask.imageSize.blackAndWhite"), width, height));
                     } else if ((inputType == FLOAT_GREY_SCALE) || (inputType == DOUBLE_GREY_SCALE)) {
-                        labelImageDimensions.setText(String.format("<html>Image size: %,d x %,d, grey scale, %d bits floating point<br>Lowest value: %,f, highest value: %,f</html>", width, height, image.getSampleModel().getSampleSize(0), maskImporter.getImageLowValue(), maskImporter.getImageHighValue()));
+                        labelImageDimensions.setText(String.format(org.pepsoft.worldpainter.WPI18n.s("ui.mask.imageSize.greyScaleFloating"), width, height, image.getSampleModel().getSampleSize(0), maskImporter.getImageLowValue(), maskImporter.getImageHighValue()));
                     } else {
-                        labelImageDimensions.setText(String.format("<html>Image size: %,d x %,d, grey scale, %d bits integer<br>Lowest value: %,d, highest value: %,d</html>", width, height, image.getSampleModel().getSampleSize(0), Math.round(maskImporter.getImageLowValue()), Math.round(maskImporter.getImageHighValue())));
+                        labelImageDimensions.setText(String.format(org.pepsoft.worldpainter.WPI18n.s("ui.mask.imageSize.greyScaleInteger"), width, height, image.getSampleModel().getSampleSize(0), Math.round(maskImporter.getImageLowValue()), Math.round(maskImporter.getImageHighValue())));
                     }
                 }
                 if ((inputType == FLOAT_GREY_SCALE) || (inputType == DOUBLE_GREY_SCALE)) {
-                    labelMaskRange.setText(String.format("Actual mask range: %,f - %,f", maskImporter.getImageLowValue(), maskImporter.getImageHighValue()));
+                    labelMaskRange.setText(String.format(org.pepsoft.worldpainter.WPI18n.s("ui.mask.actualRange.floating"), maskImporter.getImageLowValue(), maskImporter.getImageHighValue()));
                     labelMaskRange.setVisible(true);
                 } else if ((inputType != ONE_BIT_GREY_SCALE) && (inputType != COLOUR) && (inputType != UNSUPPORTED)) {
-                    labelMaskRange.setText(String.format("Actual mask range: %,d - %,d", (long) maskImporter.getImageLowValue(), (long) maskImporter.getImageHighValue()));
+                    labelMaskRange.setText(String.format(org.pepsoft.worldpainter.WPI18n.s("ui.mask.actualRange.integer"), (long) maskImporter.getImageLowValue(), (long) maskImporter.getImageHighValue()));
                     labelMaskRange.setVisible(true);
                 } else {
                     labelMaskRange.setVisible(false);
@@ -302,7 +302,7 @@ public class ImportMaskDialog extends WorldPainterDialog implements DocumentList
         } catch (IOException e) {
             logger.error("I/O error loading image " + selectedFile, e);
             labelImageDimensions.setForeground(Color.RED);
-            labelImageDimensions.setText(String.format("I/O error loading image (message: %s)!", e.getMessage()));
+            labelImageDimensions.setText(String.format(org.pepsoft.worldpainter.WPI18n.s("ui.mask.imageLoadIoError"), e.getMessage()));
             selectedFile = null;
         } catch (IllegalArgumentException e) {
             logger.error("IllegalArgumentException loading image " + selectedFile, e);
@@ -318,7 +318,7 @@ public class ImportMaskDialog extends WorldPainterDialog implements DocumentList
 
     private void updateWorldDimensions() {
         float scale = (float) spinnerScale.getValue();
-        labelWorldDimensions.setText(String.format("Scaled size: %,d x %,d blocks", Math.round(image.getWidth() * (scale / 100)), Math.round(image.getHeight() * (scale / 100))));
+        labelWorldDimensions.setText(String.format(org.pepsoft.worldpainter.WPI18n.s("ui.mask.scaledSize"), Math.round(image.getWidth() * (scale / 100)), Math.round(image.getHeight() * (scale / 100))));
     }
 
     @Override
