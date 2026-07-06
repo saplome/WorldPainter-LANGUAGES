@@ -17,8 +17,6 @@ WorldPainter-RU-RELEASE/
 .project
 .classpath
 *.iml
-.agents/
-.codex/
 
 # Logs and temporary files
 logs/
