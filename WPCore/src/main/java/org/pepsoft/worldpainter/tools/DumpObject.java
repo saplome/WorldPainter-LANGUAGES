@@ -1,0 +1,97 @@
+package org.pepsoft.worldpainter.tools;
+
+import org.pepsoft.worldpainter.*;
+import org.pepsoft.worldpainter.layers.Bo2Layer;
+import org.pepsoft.worldpainter.objects.WPObject;
+import org.pepsoft.worldpainter.plugins.CustomObjectManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.vecmath.Point3i;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.util.zip.GZIPInputStream;
+
+import static org.pepsoft.minecraft.Constants.DEFAULT_WATER_LEVEL;
+import static org.pepsoft.worldpainter.DefaultPlugin.JAVA_ANVIL_1_15;
+import static org.pepsoft.worldpainter.Dimension.Anchor.NORMAL_DETAIL;
+
+/**
+ * Created by Pepijn Schmitz on 02-09-15.
+ */
+public class DumpObject extends AbstractTool {
+    public static void main(String[] args) throws IOException, ClassNotFoundException {
+        initialisePlatform();
+
+        String filename = args[0];
+        File file = new File(filename);
+        int p = filename.lastIndexOf('.');
+        Object object;
+        switch (filename.substring(p + 1).toLowerCase()) {
+            case "layer":
+                try (ObjectInputStream in = new ObjectInputStream(new GZIPInputStream(new FileInputStream(file)))) {
+                    object = in.readObject();
+                }
+                break;
+            default:
+                object = CustomObjectManager.getInstance().loadObject(file);
+                break;
+        }
+        dump(object);
+    }
+
+    private static void dump(Object object) {
+        if (object instanceof Bo2Layer) {
+            ((Bo2Layer) object).getObjectProvider().getAllObjects().forEach(DumpObject::dump);
+        } else if (object instanceof WPObject) {
+            WPObject wpObject = (WPObject) object;
+            wpObject.prepareForExport(FAKE_DIMENSION);
+            logger.info("Name: " + wpObject.getName());
+            Point3i dim = wpObject.getDimensions();
+            logger.info("    Dimensions: " + dim);
+            logger.info("    Offset: " + wpObject.getOffset());
+            if (wpObject.getAttributes() != null) {
+                logger.info("    Attributes:");
+                wpObject.getAttributes().forEach((key, value) -> logger.info("        " + key + ": " + value));
+            }
+            if (wpObject.getEntities() != null) {
+                logger.info("    Entities:");
+                wpObject.getEntities().forEach(entity -> logger.info("        " + entity.getId() + " @ " + entity.getPos()[0] + "," + entity.getPos()[2] + "," + entity.getPos()[1] + "; data: " + entity.toNBT()));
+            }
+            if (wpObject.getTileEntities() != null) {
+                logger.info("    Tile entities:");
+                wpObject.getTileEntities().forEach(entity -> logger.info("        " + entity.getId() + " @ " + entity.getY() + "," + entity.getZ() + "," + entity.getY() + "; data: " + entity.toNBT()));
+            }
+            logger.info("    Blocks:");
+            int blockCount = 0;
+            for (int z = 0; z < dim.z; z++) {
+                for (int x = 0; x < dim.x; x++) {
+                    for (int y = 0; y < dim.y; y++) {
+                        if (wpObject.getMask(x, y, z)) {
+                            blockCount++;
+                            if (blockCount <= 100) {
+                                logger.info("        " + x + "," + y + "," + z + ": " + wpObject.getMaterial(x, y, z));
+                            }
+                        }
+                    }
+                }
+            }
+            if (blockCount > 100) {
+                logger.info("        ... and " + (blockCount - 100) + " more");
+            }
+        } else {
+            throw new IllegalArgumentException("Unrecognized object type " + object.getClass());
+        }
+    }
+
+    private static final Dimension FAKE_DIMENSION;
+
+    static {
+        TileFactory tileFactory = TileFactoryFactory.createNoiseTileFactory(0L, Terrain.GRASS, JAVA_ANVIL_1_15.minZ, JAVA_ANVIL_1_15.standardMaxHeight, 58, DEFAULT_WATER_LEVEL, false, true, 20.0f, 1.0);
+        FAKE_DIMENSION = new World2(JAVA_ANVIL_1_15, 0L, tileFactory).getDimension(NORMAL_DETAIL);
+    }
+
+    private static final Logger logger = LoggerFactory.getLogger(DumpObject.class);
+}

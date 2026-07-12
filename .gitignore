@@ -1,0 +1,35 @@
+# Build output
+target/
+release/
+WorldPainter-RU-RELEASE/
+*.class
+*.jar
+*.exe
+*.msi
+*.zip
+*.rar
+*.7z
+
+# IDE and local workspace files
+.idea/
+.vscode/
+.settings/
+.project
+.classpath
+*.iml
+
+# Logs and temporary files
+logs/
+terminals/
+agent-tools/
+mcps/
+__pycache__/
+*.pyc
+*.log
+*.tmp
+*.bak
+exporttimings.csv
+
+# OS files
+.DS_Store
+Thumbs.db

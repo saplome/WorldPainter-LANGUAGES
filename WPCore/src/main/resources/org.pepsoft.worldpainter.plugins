@@ -1,0 +1,9 @@
+{
+  "name": "WorldPainter Core",
+  "version": "${project.version}",
+  "classes": [
+    "org.pepsoft.worldpainter.DefaultPlugin",
+    "org.pepsoft.worldpainter.platforms.JavaPlatformProvider",
+    "org.pepsoft.worldpainter.DefaultCustomObjectProvider"
+  ]
+}

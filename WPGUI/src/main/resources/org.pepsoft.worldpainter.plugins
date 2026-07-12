@@ -1,0 +1,7 @@
+{
+  "name": "WorldPainter GUI",
+  "version": "${project.version}",
+  "classes": [
+    "org.pepsoft.worldpainter.layers.DefaultLayerEditorProvider"
+  ]
+}

@@ -1,0 +1,8 @@
+# WorldPainter Languages: языки интерфейса.
+# Новый язык = 5 файлов: (strings|blocks|gamedata|layers|swing)_<код>.properties
+# Формат:  <код> = <название, как оно показывается в меню>
+en = English
+ru = Русский (Russian)
+be = Беларуская (Belarusian)
+uk = Українська (Ukrainian)
+kk = Қазақша (Kazakh)

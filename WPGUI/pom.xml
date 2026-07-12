@@ -1,0 +1,159 @@
+<project>
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.pepsoft.worldpainter</groupId>
+        <artifactId>WorldPainter</artifactId>
+        <version>2.27.0</version>
+    </parent>
+
+    <artifactId>WPGUI</artifactId>
+    <name>WPGUI</name>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.pepsoft.worldpainter</groupId>
+            <artifactId>WPCore</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.pepsoft.utils</groupId>
+            <artifactId>SwingUtils</artifactId>
+            <version>${pepsoft.swingutils.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.pepsoft.worldpainter</groupId>
+            <artifactId>WPDynmapPreviewer</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.jetbrains</groupId>
+            <artifactId>annotations</artifactId>
+            <version>${jetbrains.annotations.version}</version>
+            <scope>provided</scope> <!-- Not really, but these annotations aren't needed at runtime. -->
+        </dependency>
+
+        <dependency>
+            <!-- Not in Maven central; here it comes from the
+                 worldpainter-private repo. -->
+            <groupId>net.sourceforge</groupId>
+            <artifactId>jpen</artifactId>
+            <version>${jpen.version}</version>
+        </dependency>
+        <!-- If you can't or won't use the JIDE docking framework, you can use the JIDE open source components so that
+             at least the derived Swing controls will work: -->
+        <!--<dependency>-->
+            <!--<groupId>com.jidesoft</groupId>-->
+            <!--<artifactId>jide-oss</artifactId>-->
+            <!--<version>${jide.version}</version>-->
+        <!--</dependency>-->
+        <dependency>
+            <!-- Commercial product; you will need to download the evaluation version, or obtain a license to use JIDE
+                 (an open source license is free). -->
+            <groupId>com.jidesoft</groupId>
+            <artifactId>jide-common</artifactId>
+            <version>${jide.version}</version>
+        </dependency>
+        <dependency>
+            <!-- Commercial product; you will need to download the evaluation version, or obtain a license to use JIDE
+                 (an open source license is free). -->
+            <groupId>com.jidesoft</groupId>
+            <artifactId>jide-dock</artifactId>
+            <version>${jide.version}</version>
+        </dependency>
+        <dependency>
+            <!-- Commercial product; you will need to download the evaluation version, or obtain a license to use JIDE
+                 (an open source license is free). This module is only necessary on Linux, to make the GTK look and feel
+                 work correctly. -->
+            <groupId>com.jidesoft</groupId>
+            <artifactId>jide-plaf-jdk7</artifactId>
+            <version>${jide.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <!-- Not in Maven central; here it comes from the worldpainter-private repo. -->
+            <groupId>org.netbeans.swing</groupId>
+            <artifactId>laf-dark</artifactId>
+            <version>${laf-dark.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>${slf4j.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>${logback.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>jcl-over-slf4j</artifactId>
+            <version>${slf4j.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>jul-to-slf4j</artifactId>
+            <version>${slf4j.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-to-slf4j</artifactId>
+            <version>${log4j-to-slf4j.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <includes>
+                    <include>org.pepsoft.worldpainter.plugins</include>
+                </includes>
+                <filtering>true</filtering>
+            </resource>
+            <resource>
+                <directory>src/main/resources</directory>
+                <excludes>
+                    <exclude>org.pepsoft.worldpainter.plugins</exclude>
+                </excludes>
+                <filtering>false</filtering>
+            </resource>
+        </resources>
+        <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>${exec-maven-plugin.version}</version>
+                <configuration>
+                    <executable>java</executable>
+                    <arguments>
+                        <argument>-cp</argument>
+                        <classpath/>
+                        <argument>-Dorg.pepsoft.worldpainter.devMode=true</argument>
+                        <argument>org.pepsoft.worldpainter.Main</argument>
+                    </arguments>
+                </configuration>
+            </plugin>
+            <plugin>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>${maven-failsafe-plugin.version}</version>
+                <configuration>
+                    <reuseForks>false</reuseForks>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
