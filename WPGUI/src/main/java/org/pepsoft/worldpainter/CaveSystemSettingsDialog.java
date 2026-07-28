@@ -43,6 +43,10 @@ public final class CaveSystemSettingsDialog extends WorldPainterDialog {
         buttons.add(cancel);
         final JPanel content = new JPanel(new BorderLayout(8, 8));
         content.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        final JPanel versionPanel = new JPanel(new FlowLayout(FlowLayout.LEADING, 8, 0));
+        versionPanel.add(new JLabel(text("generationVersion")));
+        versionPanel.add(generationVersion);
+        content.add(versionPanel, BorderLayout.NORTH);
         content.add(tabs, BorderLayout.CENTER);
         content.add(buttons, BorderLayout.SOUTH);
         setContentPane(content);
@@ -58,6 +62,8 @@ public final class CaveSystemSettingsDialog extends WorldPainterDialog {
     }
 
     private void createControls() {
+        generationVersion = new JComboBox<>(new String[] {
+                text("versionL200"), text("versionL201Experimental") });
         applyEverywhere = check("applyEverywhere");
         customMinimumY = check("customMinimumY");
         minimumLevel = spin(0, 15, 1);
@@ -293,6 +299,7 @@ public final class CaveSystemSettingsDialog extends WorldPainterDialog {
     }
 
     private void load(CaveSystemSettings s) {
+        generationVersion.setSelectedIndex(s.getGenerationVersion());
         set(minimumLevel, s.getMinimumLevel());
         applyEverywhere.setSelected(s.getMinimumLevel() > 0);
         customMinimumY.setSelected(s.getMinimumY() != Integer.MIN_VALUE);
@@ -322,6 +329,7 @@ public final class CaveSystemSettingsDialog extends WorldPainterDialog {
     }
 
     private void save() {
+        settings.setGenerationVersion(generationVersion.getSelectedIndex());
         settings.setMinimumLevel(applyEverywhere.isSelected() ? Math.max(1, value(minimumLevel)) : 0);
         settings.setMinimumY(customMinimumY.isSelected() ? value(minimumY) : Integer.MIN_VALUE);
         settings.setSurfaceBreaking(surfaceBreaking.isSelected()); settings.setLeaveWater(leaveWater.isSelected());
@@ -402,6 +410,7 @@ public final class CaveSystemSettingsDialog extends WorldPainterDialog {
     private static String text(String key) { return WPI18n.s("ui.caveSystem." + key); }
 
     private final CaveSystemSettings settings;
+    private JComboBox<String> generationVersion;
     private JCheckBox applyEverywhere, customMinimumY, surfaceBreaking, leaveWater, fixedWaterLevel, floodWithLava;
     private JCheckBox rotation, openCheese, openGrand, openSpaghetti, openBackbone, openNoodles;
     private JCheckBox lushCaves, enhancedLush, dripstoneCaves, enhancedDripstone;

@@ -25,3 +25,24 @@ powershell -ExecutionPolicy Bypass -File .\tools\windows-packaging\build-windows
 ```
 
 Скрипт загружает найденные Setup.exe, Portable ZIP и дополнительные assets. Повторный запуск заменяет одноимённые файлы. Публикация никогда не выполняется автоматически: после проверки страницы GitHub нажмите **Publish release** вручную.
+
+## Инкрементальные обновления
+
+- в staging автоматически добавляется `app/wp-updater.jar`, а в app-image — launcher `WorldPainter-Update.exe` (требуется `javac` в PATH);
+- `-GenerateUpdateManifest -UpdateBaseUrl <база>` — сгенерировать `release/update-manifest.txt` для апдейтера (добавляется к draft-ассетам);
+- `-UpdateManifestUrl <url>` — URL манифеста, зашиваемый в `app/updater.properties`.
+
+Подробности: `tools/updater/README.md`.
+
+## Чистые релизные архивы
+
+`tools/release/pack-release-archives.ps1` собирает архивы для GitHub и отсекает лишнее: `target/`, `release/`, `.git/`, IDE-файлы, `*.class`, `*.jar`, `*.exe`, `*.zip`, логи и временные файлы.
+
+```powershell
+.\tools\release\pack-release-archives.ps1 -VerifyOnly
+.\tools\release\pack-release-archives.ps1
+```
+
+Проверяется: нет выхлопа сборки, нет ссылок на генератор деревьев, версия совпадает в README, `installer.iss` и `build-windows-installer.ps1`, есть `docs/RELEASE_NOTES_<версия>.md`. При любой проблеме скрипт останавливается и ничего не собирает.
+
+На выходе в `release/github/`: `...-github-ready.zip` (всё для коммита), `WorldPainter-Languages-2.27.0-L2.0.1.zip` (исходники без `tools/`), `...-release-tools.zip` (только `tools/`).

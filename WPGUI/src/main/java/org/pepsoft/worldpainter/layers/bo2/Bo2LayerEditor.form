@@ -21,6 +21,7 @@
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
                   <Component id="buttonAddFile" alignment="1" min="-2" max="-2" attributes="0"/>
+                  <Component id="buttonAddDirectory" alignment="1" min="-2" max="-2" attributes="0"/>
                   <Component id="buttonRemoveFile" alignment="1" min="-2" max="-2" attributes="0"/>
                   <Component id="buttonEdit" alignment="1" min="-2" max="-2" attributes="0"/>
                   <Component id="buttonReloadAll" alignment="1" min="-2" max="-2" attributes="0"/>
@@ -86,6 +87,8 @@
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" alignment="0" attributes="0">
                       <Component id="buttonAddFile" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="buttonAddDirectory" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="buttonRemoveFile" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
@@ -357,6 +360,20 @@
       </Properties>
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="buttonAddFileActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JButton" name="buttonAddDirectory">
+      <Properties>
+        <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+          <Image iconType="3" name="/org/pepsoft/worldpainter/icons/folder_page_white.png"/>
+        </Property>
+        <Property name="toolTipText" type="java.lang.String" value="Select a folder with objects"/>
+        <Property name="margin" type="java.awt.Insets" editor="org.netbeans.beaninfo.editors.InsetsEditor">
+          <Insets value="[2, 2, 2, 2]"/>
+        </Property>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="buttonAddDirectoryActionPerformed"/>
       </Events>
     </Component>
     <Component class="javax.swing.JButton" name="buttonRemoveFile">

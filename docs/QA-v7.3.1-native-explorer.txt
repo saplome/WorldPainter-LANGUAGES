@@ -1,0 +1,44 @@
+WorldPainter v7.3.1 native Windows Explorer picker - QA
+Date: 2026-07-27
+
+PASS: all Maven POM files parse as XML
+PASS: Vista+ IFileDialog open/save/multi/folder, owner, filters, extension and cancellation paths present
+PASS: every Windows FileUtils mode routes to the direct Explorer backend
+PASS: jnafilechooser and both legacy Windows chooser classes removed
+PASS: no direct JFileChooser/FileDialog construction outside central FileUtils
+INFO: selectFileForOpen: 9 source occurrences
+INFO: selectFilesForOpen: 5 source occurrences
+INFO: selectFilesOrDirectoriesForOpen: 1 source occurrences
+INFO: selectDirectoryForOpen: 7 source occurrences
+INFO: selectFileForSave: 9 source occurrences
+PASS: 10 localisation bundles have exact key parity (2226 keys)
+INFO: JOptionPane: 39 files, 209 occurrences
+INFO: MessageUtils: 30 files, 35 occurrences
+INFO: dialog classes: 40 files, 40 occurrences
+INFO: setVisible(true): 45 files, 97 occurrences
+INFO: JPopupMenu: 8 files, 36 occurrences
+INFO: JColorChooser: 3 files, 4 occurrences
+PASS: camera pitch+dy, palm top-cover and mangrove-root invariants remain present
+PASS: CaveSystem, river and underground files untouched
+INFO: modified=13, added=3, deleted=2
+MODIFIED: WPGUI/pom.xml
+MODIFIED: WPGUI/src/main/java/org/pepsoft/worldpainter/App.java
+MODIFIED: WPGUI/src/main/java/org/pepsoft/worldpainter/util/FileUtils.java
+MODIFIED: WPGUI/src/main/resources/org/pepsoft/worldpainter/resources/strings.properties
+MODIFIED: WPGUI/src/main/resources/org/pepsoft/worldpainter/resources/strings_be.properties
+MODIFIED: WPGUI/src/main/resources/org/pepsoft/worldpainter/resources/strings_de.properties
+MODIFIED: WPGUI/src/main/resources/org/pepsoft/worldpainter/resources/strings_es.properties
+MODIFIED: WPGUI/src/main/resources/org/pepsoft/worldpainter/resources/strings_fr.properties
+MODIFIED: WPGUI/src/main/resources/org/pepsoft/worldpainter/resources/strings_it.properties
+MODIFIED: WPGUI/src/main/resources/org/pepsoft/worldpainter/resources/strings_kk.properties
+MODIFIED: WPGUI/src/main/resources/org/pepsoft/worldpainter/resources/strings_ru.properties
+MODIFIED: WPGUI/src/main/resources/org/pepsoft/worldpainter/resources/strings_uk.properties
+MODIFIED: WPGUI/src/main/resources/org/pepsoft/worldpainter/resources/strings_zh.properties
+ADDED: WPGUI/src/main/java/org/pepsoft/worldpainter/util/WindowsExplorerFileDialog.java
+ADDED: docs/WINDOWS_EXPLORER_DIALOG_AUDIT_RU.md
+ADDED: docs/v73-popup-inventory.tsv
+DELETED: WPGUI/src/main/java/org/pepsoft/worldpainter/util/WindowsExplorerFolderDialog.java
+DELETED: WPGUI/src/main/java/org/pepsoft/worldpainter/util/WindowsModernFileDialog.java
+PASS: Java 17 direct compilation of FileFilter, FileUtils and WindowsExplorerFileDialog (9 class files)
+PASS: static QA complete
+NOTE: COM UI runtime smoke-test requires Windows; checklist is in docs/WINDOWS_EXPLORER_DIALOG_AUDIT_RU.md
