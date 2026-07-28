@@ -977,13 +977,14 @@ public class ScriptRunner extends WorldPainterDialog {
             JButton button = new JButton("...");
             button.setToolTipText(description);
             button.addActionListener(e -> {
-                JFileChooser fileChooser = new JFileChooser();
-                if (! field.getText().trim().isEmpty()) {
-                    fileChooser.setSelectedFile(new File(field.getText().trim()));
-                }
-                if (doWithoutExceptionReporting(() -> fileChooser.showOpenDialog(panel)) == JFileChooser.APPROVE_OPTION) {
-                    field.setText(fileChooser.getSelectedFile().getAbsolutePath());
-                }
+                final File currentFile = field.getText().trim().isEmpty() ? null : new File(field.getText().trim());
+                final File selectedFile = FileUtils.selectFileForOpen(SwingUtilities.getWindowAncestor(panel), description,
+                        currentFile, new FileFilter() {
+                            @Override public boolean accept(File file) { return true; }
+                            @Override public String getDescription() { return org.pepsoft.worldpainter.WPI18n.s("ui.filePicker.allFiles"); }
+                            @Override public String getExtensions() { return "*"; }
+                        });
+                if (selectedFile != null) field.setText(selectedFile.getAbsolutePath());
             });
             panel.add(button, constraints);
             return panel;

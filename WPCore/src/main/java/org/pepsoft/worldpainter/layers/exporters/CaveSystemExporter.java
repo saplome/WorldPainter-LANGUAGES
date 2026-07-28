@@ -8,15 +8,19 @@ package org.pepsoft.worldpainter.layers.exporters;
 
 import com.google.common.collect.ImmutableSet;
 import org.pepsoft.minecraft.Chunk;
+import org.pepsoft.minecraft.Material;
 import org.pepsoft.util.PerlinNoise;
 import org.pepsoft.worldpainter.Dimension;
+import org.pepsoft.worldpainter.NoiseSettings;
 import org.pepsoft.worldpainter.Platform;
 import org.pepsoft.worldpainter.exporting.Fixup;
 import org.pepsoft.worldpainter.exporting.MinecraftWorld;
 import org.pepsoft.worldpainter.exporting.SecondPassLayerExporter;
 import org.pepsoft.worldpainter.layers.CaveSystem;
+import org.pepsoft.worldpainter.heightMaps.NoiseHeightMap;
 
 import java.awt.*;
+import java.util.Arrays;
 import java.util.BitSet;
 import java.util.List;
 import java.util.Map;
@@ -38,6 +42,19 @@ public final class CaveSystemExporter extends AbstractCavesExporter<CaveSystem>
                 CaveSystem.INSTANCE);
         caveSettings = (CaveSystemSettings) super.settings;
         runtime = new RuntimeConfig(caveSettings);
+        if (runtime.experimental && caveSettings.isLushCaves()) {
+            final long gateSeed = dimension.getSeed() + stableHash("minecraft:lush_caves");
+            final float regionSize = Math.max(0.25f, Math.min(16.0f,
+                    2.0f * caveSettings.getLushRegionScale() / 80.0f));
+            pluginLushCheeseNoise = new NoiseHeightMap(new NoiseSettings(0L, 500, 1,
+                    10.0f * regionSize), gateSeed);
+            final double rarity = Math.max(0.002, Math.min(0.35,
+                    0.03 * 105.0 / Math.max(1, caveSettings.getLushRarity())));
+            pluginLushCheeseThreshold = calibrateThreshold(pluginLushCheeseNoise, rarity, gateSeed);
+        } else {
+            pluginLushCheeseNoise = null;
+            pluginLushCheeseThreshold = Double.POSITIVE_INFINITY;
+        }
     }
 
     @Override public Set<Stage> getStages() { return decorationEnabled ? ImmutableSet.of(CARVE, ADD_FEATURES) : singleton(CARVE); }
@@ -51,10 +68,15 @@ public final class CaveSystemExporter extends AbstractCavesExporter<CaveSystem>
         excavatedBlocks.clear();
         lushMegaBlocks.clear();
         dripstoneMegaBlocks.clear();
+        lushCheeseBlocks.clear();
         seedNoises(seed);
         visitChunksForLayerInAreaForEditing(minecraftWorld, layer, area, dimension, (tile, chunkX, chunkZ, chunkSupplier) -> {
             final Chunk chunk = chunkSupplier.get();
             final int xOffset = (chunkX & 7) << 4, zOffset = (chunkZ & 7) << 4;
+            final int columnLength = Math.max(1, maxZ - minY + 1);
+            final Material[] originals = new Material[columnLength];
+            final boolean[] carvedBySystem = new boolean[columnLength];
+            final int[] runBottom = new int[columnLength], runTop = new int[columnLength];
             for (int x = 0; x < 16; x++) for (int z = 0; z < 16; z++) {
                 final int localX = xOffset + x, localZ = zOffset + z;
                 if (tile.getBitLayerValue(org.pepsoft.worldpainter.layers.Void.INSTANCE, localX, localZ)) continue;
@@ -65,15 +87,24 @@ public final class CaveSystemExporter extends AbstractCavesExporter<CaveSystem>
                 final int surfaceY = Math.min(tile.getIntHeight(localX, localZ), maxZ);
                 final int roofDepth = Math.max(dimension.getTopLayerDepth(worldX, worldZ, surfaceY), 3);
                 final int maxYHere = settings.isSurfaceBreaking() ? surfaceY : surfaceY - roofDepth;
+                Arrays.fill(originals, null);
+                Arrays.fill(carvedBySystem, false);
                 final DensityColumn column = createColumn(worldX, worldZ, surfaceY, minY, intensity);
                 final int fluidData = fluidAt(tile.getWaterLevel(localX, localZ), worldX, worldZ, minY, maxYHere);
                 final int fluidLevel = fluidData >> 1;
                 final boolean fluidLava = (fluidData & 1) != 0;
                 setupForColumn(seed, tile, maxZ, fluidLevel, false, settings.isSurfaceBreaking(),
                         settings.isLeaveWater(), fluidLava);
+                boolean pluginCheesePresent = false;
+                final boolean pluginLushCheeseColumn = pluginLushCheeseNoise != null
+                        && pluginLushCheeseNoise.getValue(worldX, worldZ) >= pluginLushCheeseThreshold;
                 for (int y = maxYHere; y >= minY; y--) {
-                    if (chunk.getMaterial(x, y, z).empty) { emptyBlockEncountered(); continue; }
+                    final Material originalMaterial = chunk.getMaterial(x, y, z);
+                    if (originalMaterial.empty) { emptyBlockEncountered(); continue; }
+                    originals[y - minY] = originalMaterial;
                     final int type = caveType(worldX, y, worldZ, column);
+                    if (runtime.experimental && (type == CAVE_CHEESE)) pluginCheesePresent = true;
+                    carvedBySystem[y - minY] = type != CAVE_NONE;
                     if ((type != CAVE_NONE) && area.contains(worldX, worldZ)) {
                         final int blockIndex = (worldX - area.x) + (worldZ - area.y) * area.width
                                 + (y - minHeight) * area.width * area.height;
@@ -85,7 +116,17 @@ public final class CaveSystemExporter extends AbstractCavesExporter<CaveSystem>
                             ? (((type == CAVE_BACKBONE) && settings.isLavaInBackbone())
                                     || (((type == CAVE_CHEESE) || (type == CAVE_GRAND)) && settings.isLavaInChambers()))
                             : (((type == CAVE_CHEESE) || (type == CAVE_GRAND)) && settings.isWaterInChambers());
+                    if ((type == CAVE_CHEESE) && pluginLushCheeseColumn
+                            && ((!allowFluid) || (y > fluidLevel)) && area.contains(worldX, worldZ)) {
+                        final int blockIndex = (worldX - area.x) + (worldZ - area.y) * area.width
+                                + (y - minHeight) * area.width * area.height;
+                        lushCheeseBlocks.set(blockIndex);
+                    }
                     processBlock(chunk, x, y, z, type != CAVE_NONE, allowFluid);
+                }
+                if (runtime.experimental && pluginCheesePresent) {
+                    fillPluginPillarColumn(chunk, x, z, worldX, worldZ, minY, maxYHere,
+                            originals, carvedBySystem, runBottom, runTop, area);
                 }
                 resetColumn();
             }
@@ -112,7 +153,8 @@ public final class CaveSystemExporter extends AbstractCavesExporter<CaveSystem>
             final int z = localZ + area.y;
             final int x = localX + area.x;
             final int forcedBiome = lushMegaBlocks.get(blockIndex) ? MEGA_BIOME_LUSH
-                    : (dripstoneMegaBlocks.get(blockIndex) ? MEGA_BIOME_DRIPSTONE : MEGA_BIOME_NORMAL);
+                    : (dripstoneMegaBlocks.get(blockIndex) ? MEGA_BIOME_DRIPSTONE
+                    : (lushCheeseBlocks.get(blockIndex) ? MEGA_BIOME_LUSH : MEGA_BIOME_NORMAL));
             decorateBlock(minecraftWorld, random, x, z, y, forcedBiome);
         }
         return null;
@@ -175,9 +217,20 @@ public final class CaveSystemExporter extends AbstractCavesExporter<CaveSystem>
 
         float cheese = NEGATIVE;
         if (runtime.cheeseEnabled) {
-            final float familyBoundary = runtime.openCheese ? boundaryPenalty : closedBoundaryPenalty;
-            cheese = noise[N_CHEESE] + noise[N_DETAIL] + runtime.globalDensityOffset
-                    - (runtime.cheeseThreshold + intensityPenalty + familyBoundary);
+            if (runtime.experimental) {
+                final float familyBoundary = runtime.openCheese ? boundary : closedBoundary;
+                final double amountThreshold = 0.1 + 0.5 * runtime.pluginCheeseAmount;
+                final double t0 = Math.min(1.0, amountThreshold * (1.0 + column.intensity * 0.3));
+                if (t0 > 0.0) {
+                    final double n = pluginCheeseNoise(x, y, z);
+                    final double carveness = (2.0 * t0 - 1.0 - n) / (2.0 * t0);
+                    cheese = (float) carveness - (1.0f - familyBoundary);
+                }
+            } else {
+                final float familyBoundary = runtime.openCheese ? boundaryPenalty : closedBoundaryPenalty;
+                cheese = noise[N_CHEESE] + noise[N_DETAIL] + runtime.globalDensityOffset
+                        - (runtime.cheeseThreshold + intensityPenalty + familyBoundary);
+            }
         }
 
         float grand = NEGATIVE;
@@ -254,10 +307,12 @@ public final class CaveSystemExporter extends AbstractCavesExporter<CaveSystem>
     private void fillNoiseFrame(int x, int y, int z, DensityColumn column, float[] target) {
         warpedCoordinates(x, y, z, column.warped);
         prepareCoordinates(column.warped[0], column.warped[1], column.warped[2], column.prepared);
-        if (runtime.cheeseEnabled) {
+        if (runtime.experimental || !runtime.cheeseEnabled) {
+            target[N_CHEESE] = target[N_DETAIL] = 0.0f;
+        } else {
             target[N_CHEESE] = fbmPrepared(cheeseA, cheeseB, column.prepared, runtime.cheeseH, runtime.cheeseV);
             target[N_DETAIL] = samplePrepared(detailNoise, column.prepared, 31.0f, 27.0f) * runtime.detailFactor;
-        } else { target[N_CHEESE] = target[N_DETAIL] = 0.0f; }
+        }
         target[N_GRAND] = runtime.grandEnabled
                 ? fbmWorld(grandA, grandB, column.warped[0], column.warped[1], column.warped[2], runtime.grandH, runtime.grandV) : 0.0f;
         if (runtime.spaghettiEnabled) {
@@ -272,6 +327,118 @@ public final class CaveSystemExporter extends AbstractCavesExporter<CaveSystem>
             target[N_NOODLE_A] = samplePrepared(noodleA, column.prepared, runtime.noodleH, 37.0f);
             target[N_NOODLE_B] = samplePrepared(noodleB, column.prepared, runtime.noodleH, 37.0f);
         } else { target[N_NOODLE_A] = target[N_NOODLE_B] = 0.0f; }
+    }
+
+    private double pluginCheeseNoise(int x, int y, int z) {
+        final double f = (1.0 / 48.0) / runtime.pluginCheeseSize;
+        final double vertical = 1.7 * runtime.pluginCheeseVerticalMultiplier;
+        final double a = pluginCheeseA.fractal(4, x * f, y * f * vertical, z * f,
+                runtime.pluginCheesePersistence);
+        final double b = pluginCheeseB.fractal(4, x * f * 1.13, y * f * vertical * 1.07,
+                z * f * 1.13, runtime.pluginCheesePersistence);
+        return 0.5 * (a - b);
+    }
+
+    private void fillPluginPillarColumn(Chunk chunk, int localX, int localZ, int worldX, int worldZ,
+                                        int minY, int maxY, Material[] originals, boolean[] carved,
+                                        int[] runBottom, int[] runTop, Rectangle area) {
+        final PluginPillarColumn pillar = pluginPillarAt(worldX, worldZ);
+        if (pillar == null || maxY < minY) return;
+        int currentBottom = Integer.MIN_VALUE;
+        for (int y = minY; y <= maxY; y++) {
+            final int index = y - minY;
+            if (carved[index]) {
+                if (currentBottom == Integer.MIN_VALUE) currentBottom = y;
+                runBottom[index] = currentBottom;
+            } else {
+                currentBottom = Integer.MIN_VALUE;
+                runBottom[index] = Integer.MIN_VALUE;
+            }
+        }
+        int currentTop = Integer.MIN_VALUE;
+        for (int y = maxY; y >= minY; y--) {
+            final int index = y - minY;
+            if (carved[index]) {
+                if (currentTop == Integer.MIN_VALUE) currentTop = y;
+                runTop[index] = currentTop;
+            } else {
+                currentTop = Integer.MIN_VALUE;
+                runTop[index] = Integer.MIN_VALUE;
+            }
+        }
+        final int range = Math.max(1, (int) Math.round(6.0 * runtime.pluginCheeseSize));
+        for (int y = maxY; y >= minY; y--) {
+            final int index = y - minY;
+            if (!carved[index]) continue;
+            final Material originalMaterial = originals[index];
+            if (!isRestorablePillarMaterial(originalMaterial)) continue;
+            final int distDown = Math.min(y - runBottom[index] + 1, range);
+            final int distUp = Math.min(runTop[index] - y + 1, range);
+            if (!pillar.shouldFill(y, distDown, distUp, range)) continue;
+            chunk.setMaterial(localX, y, localZ, originalMaterial);
+            carved[index] = false;
+            if (area.contains(worldX, worldZ)) {
+                final int blockIndex = (worldX - area.x) + (worldZ - area.y) * area.width
+                        + (y - minHeight) * area.width * area.height;
+                excavatedBlocks.clear(blockIndex);
+                lushMegaBlocks.clear(blockIndex);
+                dripstoneMegaBlocks.clear(blockIndex);
+                lushCheeseBlocks.clear(blockIndex);
+            }
+        }
+    }
+
+    private PluginPillarColumn pluginPillarAt(int worldX, int worldZ) {
+        final double density = 0.35;
+        final double f = (1.0 / 48.0) / runtime.pluginCheeseSize;
+        final double pillarFrequency = f * 12.0;
+        final CaveSystemWorleyNoise3D.Cell cell = pluginPillarField.nearest(
+                worldX * pillarFrequency, worldZ * pillarFrequency, 0.0);
+        if (cell.value >= density) return null;
+        final double baseRadius = 0.1 + 0.18 * fract(cell.value * 7.13 + 0.5);
+        final double maximumRadius = Math.min(0.85, baseRadius * 1.7 * 1.371);
+        if (cell.f1 >= maximumRadius) return null;
+        return new PluginPillarColumn(worldX, worldZ, cell.f1, baseRadius, pillarFrequency);
+    }
+
+    private static boolean isRestorablePillarMaterial(Material material) {
+        return material != null && !material.empty && material.solid
+                && !material.isNamedOneOf("minecraft:water", "minecraft:lava")
+                && !material.isNamed("minecraft:bedrock");
+    }
+
+    private static double fract(double value) {
+        final double result = value - Math.floor(value);
+        return result < 0.0 ? result + 1.0 : result;
+    }
+
+    private final class PluginPillarColumn {
+        PluginPillarColumn(int worldX, int worldZ, double cellDistance,
+                           double baseRadius, double pillarFrequency) {
+            this.worldX = worldX;
+            this.worldZ = worldZ;
+            this.cellDistance = cellDistance;
+            this.baseRadius = baseRadius;
+            this.pillarFrequency = pillarFrequency;
+        }
+
+        boolean shouldFill(int y, int distDown, int distUp, int range) {
+            final int verticalClearance = Math.min(Math.min(distUp, distDown), range);
+            final double depth = Math.max(0.0, Math.min(1.0, verticalClearance / (double) range));
+            final double flare = 1.7 - 1.15 * depth;
+            final double radiusBase = baseRadius * flare;
+            final double radiusLow = Math.max(0.06, radiusBase * 0.629);
+            final double radiusHigh = Math.min(0.85, radiusBase * 1.371);
+            if (cellDistance < radiusLow) return true;
+            if (cellDistance >= radiusHigh) return false;
+            final double detail = pluginPillarDetail.fractal(4,
+                    worldX * pillarFrequency, y * pillarFrequency, worldZ * pillarFrequency, 0.5);
+            final double radius = Math.max(0.06, Math.min(0.85, radiusBase * (1.0 + 0.35 * detail)));
+            return cellDistance < radius;
+        }
+
+        final int worldX, worldZ;
+        final double cellDistance, baseRadius, pillarFrequency;
     }
 
         private float megaCavernDensity(int x, int y, int z, DensityColumn column) {
@@ -474,15 +641,51 @@ public final class CaveSystemExporter extends AbstractCavesExporter<CaveSystem>
         return noise.getPerlinNoise(xr / horizontalScale, zr / horizontalScale, yr / verticalScale);
     }
 
+    private static long stableHash(String value) {
+        long hash = 0x9E3779B97F4A7C15L;
+        for (int i = 0; i < value.length(); i++) {
+            hash ^= value.charAt(i);
+            hash *= 0xBF58476D1CE4E5B9L;
+            hash ^= hash >>> 27;
+        }
+        return hash ^ (hash >>> 31);
+    }
+
+    private static double calibrateThreshold(NoiseHeightMap noise, double rarity, long seed) {
+        if (rarity <= 0.0) return Double.POSITIVE_INFINITY;
+        if (rarity >= 1.0) return Double.NEGATIVE_INFINITY;
+        final double[] samples = new double[8192];
+        final Random random = new Random(seed);
+        for (int i = 0; i < samples.length; i++) {
+            samples[i] = noise.getValue(random.nextInt(1000000) - 500000,
+                    random.nextInt(1000000) - 500000);
+        }
+        Arrays.sort(samples);
+        final int index = (int) Math.floor((1.0 - rarity) * samples.length);
+        return samples[Math.max(0, Math.min(samples.length - 1, index))];
+    }
+
     private int fluidAt(int surfaceWaterLevel, int x, int z, int minY, int maxY) {
         if (caveSettings.getWaterLevel() >= minHeight)
             return packFluid(caveSettings.getWaterLevel(), caveSettings.isFloodWithLava());
         if (caveSettings.isFloodWithLava()) return packFluid(minY + caveSettings.getLavaZoneHeight(), true);
-        final long hash = mix64(seededFor ^ ((long) Math.floorDiv(x, caveSettings.getLavaScale()) * 0x9E3779B97F4A7C15L)
-                ^ ((long) Math.floorDiv(z, caveSettings.getLavaScale()) * 0xC2B2AE3D27D4EB4FL));
-        if ((caveSettings.getLavaFrequency() > 0)
-                && (Math.floorMod(hash, 100L) < caveSettings.getLavaFrequency()))
-            return packFluid(Math.min(maxY - 3, minY + caveSettings.getLavaZoneHeight()), true);
+        if (runtime.experimental) {
+            if (caveSettings.getLavaFrequency() > 0) {
+                final float lava = lavaNoise.getPerlinNoise(x / (float) caveSettings.getLavaScale(),
+                        z / (float) caveSettings.getLavaScale(), 0.0f);
+                final float lavaThreshold = 0.50f - caveSettings.getLavaFrequency() / 100.0f;
+                if (lava >= lavaThreshold) {
+                    return packFluid(Math.min(maxY - 3, minY + caveSettings.getLavaZoneHeight()), true);
+                }
+            }
+        } else {
+            final long hash = mix64(seededFor ^ ((long) Math.floorDiv(x, caveSettings.getLavaScale()) * 0x9E3779B97F4A7C15L)
+                    ^ ((long) Math.floorDiv(z, caveSettings.getLavaScale()) * 0xC2B2AE3D27D4EB4FL));
+            if ((caveSettings.getLavaFrequency() > 0)
+                    && (Math.floorMod(hash, 100L) < caveSettings.getLavaFrequency())) {
+                return packFluid(Math.min(maxY - 3, minY + caveSettings.getLavaZoneHeight()), true);
+            }
+        }
         if (caveSettings.getWaterFrequency() <= 0) return packFluid(minHeight - 1, false);
         final float wet = waterNoise.getPerlinNoise(x / (float) caveSettings.getWaterScale(), z / (float) caveSettings.getWaterScale(), 0.0f);
         final float threshold = 0.50f - caveSettings.getWaterFrequency() / 100.0f;
@@ -500,8 +703,13 @@ public final class CaveSystemExporter extends AbstractCavesExporter<CaveSystem>
         seededFor = seed;
         final PerlinNoise[] noises = { cheeseA, cheeseB, grandA, grandB, spaghettiA, spaghettiB,
                 backboneA, backboneB, noodleA, noodleB, detailNoise, warpX, warpY, warpZ,
-                surfaceSelector, boundaryNoise, waterNoise };
+                surfaceSelector, boundaryNoise, waterNoise, lavaNoise };
         for (int i = 0; i < noises.length; i++) noises[i].setSeed(seed + SEED_OFFSETS[i]);
+        final long pluginSeed = seed ^ 0xCA7E6E7AL;
+        pluginCheeseA = new CaveSystemSimplexNoise3D(pluginSeed);
+        pluginCheeseB = new CaveSystemSimplexNoise3D(pluginSeed ^ 0xA5A5A5A5L);
+        pluginPillarField = new CaveSystemWorleyNoise3D(pluginSeed ^ 0x50EDCA7L);
+        pluginPillarDetail = new CaveSystemSimplexNoise3D(pluginSeed ^ 0xB1770B5EL);
     }
 
     private static float smoothMax(float a, float b, float k) {
@@ -517,15 +725,19 @@ public final class CaveSystemExporter extends AbstractCavesExporter<CaveSystem>
     private final PerlinNoise spaghettiA=new PerlinNoise(0), spaghettiB=new PerlinNoise(0), backboneA=new PerlinNoise(0), backboneB=new PerlinNoise(0);
     private final PerlinNoise noodleA=new PerlinNoise(0), noodleB=new PerlinNoise(0), detailNoise=new PerlinNoise(0);
     private final PerlinNoise warpX=new PerlinNoise(0), warpY=new PerlinNoise(0), warpZ=new PerlinNoise(0);
-    private final PerlinNoise surfaceSelector=new PerlinNoise(0), boundaryNoise=new PerlinNoise(0), waterNoise=new PerlinNoise(0);
+    private final PerlinNoise surfaceSelector=new PerlinNoise(0), boundaryNoise=new PerlinNoise(0), waterNoise=new PerlinNoise(0), lavaNoise=new PerlinNoise(0);
+    private CaveSystemSimplexNoise3D pluginCheeseA, pluginCheeseB, pluginPillarDetail;
+    private CaveSystemWorleyNoise3D pluginPillarField;
     private final CaveSystemSettings caveSettings;
     private final BitSet excavatedBlocks = new BitSet();
-    private final BitSet lushMegaBlocks = new BitSet(), dripstoneMegaBlocks = new BitSet();
+    private final BitSet lushMegaBlocks = new BitSet(), dripstoneMegaBlocks = new BitSet(), lushCheeseBlocks = new BitSet();
+    private final NoiseHeightMap pluginLushCheeseNoise;
+    private final double pluginLushCheeseThreshold;
     private final Map<Long, MegaRegion> megaRegionCache = new ConcurrentHashMap<>();
     private final Map<Long, MegaRegion[]> megaNeighbourhoodCache = new ConcurrentHashMap<>();
     private final RuntimeConfig runtime;
     private long seededFor=Long.MIN_VALUE;
-    private static final long[] SEED_OFFSETS={1009,1013,1019,1021,1031,1033,1039,1049,1051,1061,1063,1069,1087,1091,1093,1097,1103};
+    private static final long[] SEED_OFFSETS={1009,1013,1019,1021,1031,1033,1039,1049,1051,1061,1063,1069,1087,1091,1093,1097,1103,1109};
     private static final float NEGATIVE=-1000000.0f;
     private static final int MEGA_CELL_SIZE=256;
     private static final int N_CHEESE=0,N_DETAIL=1,N_GRAND=2,N_SPAGHETTI_A=3,N_SPAGHETTI_B=4,
@@ -535,12 +747,18 @@ public final class CaveSystemExporter extends AbstractCavesExporter<CaveSystem>
 
     private static final class RuntimeConfig {
         RuntimeConfig(CaveSystemSettings s) {
+            experimental=s.getGenerationVersion() == CaveSystemSettings.GENERATION_L2_0_1_EXPERIMENTAL;
             domainRotation=s.isDomainRotation();warpStrength=s.getWarpStrength();warpScale=s.getWarpScale();
             globalDensityOffset=(s.getOverallDensity()-100)*0.0012f;unionSmoothness=s.getUnionSmoothness()/100.0f*0.10f;
             final float spacing=s.getCaveSpacing()/100.0f;
             cheeseEnabled=s.getCheeseFrequency()>0;grandEnabled=s.getGrandFrequency()>0;
             spaghettiEnabled=s.getSpaghettiFrequency()>0;backboneEnabled=s.getBackboneFrequency()>0;noodleEnabled=s.getNoodleFrequency()>0;
             cheeseH=118.0f*s.getCheeseHorizontalScale()/100.0f*spacing;cheeseV=74.0f*s.getCheeseVerticalScale()/100.0f;
+            pluginCheeseSize=Math.max(0.25f,2.0f*s.getCheeseHorizontalScale()/100.0f*spacing);
+            pluginCheeseVerticalMultiplier=100.0f/Math.max(1,s.getCheeseVerticalScale());
+            pluginCheeseAmount=clamp(0.40f+(s.getCheeseFrequency()-120)*0.0025f
+                    +(s.getCheeseSize()-115)*0.0015f+(s.getOverallDensity()-85)*0.0020f,0.0f,1.0f);
+            pluginCheesePersistence=clamp(0.50f+(s.getDetailStrength()-45)*0.0020f,0.20f,0.80f);
             grandH=220.0f*s.getGrandHorizontalScale()/100.0f*spacing;grandV=125.0f*s.getGrandVerticalScale()/100.0f;
             spaghettiH=65.0f*spacing;backboneH=92.0f*spacing;noodleH=43.0f*spacing;
             detailFactor=s.getDetailStrength()/100.0f*0.10f;
@@ -562,11 +780,12 @@ public final class CaveSystemExporter extends AbstractCavesExporter<CaveSystem>
             boundaryFade=Math.max(1.0f,s.getBoundaryFade());boundaryWarp=s.getBoundaryWarp();
             bottomClearance=s.getBottomClearance();surfaceClearance=s.getSurfaceClearance();
         }
-        final boolean domainRotation,cheeseEnabled,grandEnabled,spaghettiEnabled,backboneEnabled,noodleEnabled;
+        final boolean experimental,domainRotation,cheeseEnabled,grandEnabled,spaghettiEnabled,backboneEnabled,noodleEnabled;
         final boolean openCheese,openGrand,openSpaghetti,openBackbone,openNoodles,needsClosedBoundary;
         final int openingFrequency,megaFrequency,megaTallChance,megaLushChance,megaDripstoneChance;
         final float megaHorizontalScale,megaVerticalScale,warpStrength,warpScale,globalDensityOffset,unionSmoothness;
-        final float cheeseH,cheeseV,grandH,grandV,spaghettiH,backboneH,noodleH,detailFactor;
+        final float cheeseH,cheeseV,pluginCheeseSize,pluginCheeseVerticalMultiplier,pluginCheeseAmount,pluginCheesePersistence;
+        final float grandH,grandV,spaghettiH,backboneH,noodleH,detailFactor;
         final float cheeseThreshold,grandThreshold,spaghettiBase,backboneBase,noodleBase;
         final float openingScale,openingThreshold,openingBand,openingStrength,openingDepth;
         final float boundaryFade,boundaryWarp,bottomClearance,surfaceClearance;
@@ -620,7 +839,14 @@ public final class CaveSystemExporter extends AbstractCavesExporter<CaveSystem>
         int lastMegaBiome=MEGA_BIOME_NORMAL;
     }
     public static final class CaveSystemSettings implements CaveSettings {
+        public static final int GENERATION_L2_0_0 = 0;
+        public static final int GENERATION_L2_0_1_EXPERIMENTAL = 1;
         public CaveSystemSettings() { syncDecorationSettings(); }
+        public int getGenerationVersion() { return (generationVersion == GENERATION_L2_0_1_EXPERIMENTAL) ? GENERATION_L2_0_1_EXPERIMENTAL : GENERATION_L2_0_0; }
+        public void setGenerationVersion(int value) {
+            generationVersion = (value == GENERATION_L2_0_1_EXPERIMENTAL)
+                    ? GENERATION_L2_0_1_EXPERIMENTAL : GENERATION_L2_0_0;
+        }
         private void syncDecorationSettings() {
             decorationSettings = new CaveDecorationSettings(false, true, lushCaves, dripstoneCaves);
             decorationSettings.setLushThresholdOffset(lushRarity);
@@ -725,7 +951,7 @@ public final class CaveSystemExporter extends AbstractCavesExporter<CaveSystem>
         public boolean isLavaInChambers(){return lavaInChambers;} public void setLavaInChambers(boolean v){lavaInChambers=v;}
         @Override public CaveSystemSettings clone(){try{CaveSystemSettings c=(CaveSystemSettings)super.clone();if(decorationSettings!=null)c.decorationSettings=decorationSettings.clone();return c;}catch(CloneNotSupportedException e){throw new RuntimeException(e);}}
         @Override public boolean equals(Object obj){if(!(obj instanceof CaveSystemSettings))return false;CaveSystemSettings o=(CaveSystemSettings)obj;return hashCode()==o.hashCode();}
-        @Override public int hashCode(){return Objects.hash(lushCaves,dripstoneCaves,lushRarity,dripstoneRarity,lushRegionScale,dripstoneRegionScale,mixedPatchChance,enhancedLushFeatures,lushPoolFrequency,lushPoolSpacing,lushPoolMinRadius,lushPoolMaxRadius,lushPoolDryChance,enhancedDripstoneFeatures,dripstonePatchCoverage,smallDripstoneFrequency,largeDripstoneFrequency,largeDripstoneSpacing,largeDripstoneMaxRadius,largeDripstoneSearchHeight,surfaceBreaking,leaveWater,floodWithLava,waterLevel,minimumLevel,minimumY,domainRotation,warpStrength,warpScale,detailStrength,unionSmoothness,overallDensity,caveSpacing,cheeseFrequency,cheeseSize,cheeseHorizontalScale,cheeseVerticalScale,grandFrequency,grandSize,grandHorizontalScale,grandVerticalScale,megaFrequency,megaHorizontalScale,megaVerticalScale,megaTallChance,megaLushChance,megaDripstoneChance,spaghettiFrequency,spaghettiWidth,backboneFrequency,backboneWidth,noodleFrequency,noodleWidth,bottomClearance,surfaceClearance,boundaryFade,boundaryWarp,surfaceOpeningFrequency,surfaceOpeningStrength,surfaceOpeningDepth,surfaceOpeningScale,surfaceOpeningSoftness,openCheese,openGrand,openSpaghetti,openBackbone,openNoodles,waterFrequency,waterScale,waterInChambers,lavaFrequency,lavaScale,lavaZoneHeight,lavaInBackbone,lavaInChambers,decorationSettings);}
+        @Override public int hashCode(){return Objects.hash(generationVersion,lushCaves,dripstoneCaves,lushRarity,dripstoneRarity,lushRegionScale,dripstoneRegionScale,mixedPatchChance,enhancedLushFeatures,lushPoolFrequency,lushPoolSpacing,lushPoolMinRadius,lushPoolMaxRadius,lushPoolDryChance,enhancedDripstoneFeatures,dripstonePatchCoverage,smallDripstoneFrequency,largeDripstoneFrequency,largeDripstoneSpacing,largeDripstoneMaxRadius,largeDripstoneSearchHeight,surfaceBreaking,leaveWater,floodWithLava,waterLevel,minimumLevel,minimumY,domainRotation,warpStrength,warpScale,detailStrength,unionSmoothness,overallDensity,caveSpacing,cheeseFrequency,cheeseSize,cheeseHorizontalScale,cheeseVerticalScale,grandFrequency,grandSize,grandHorizontalScale,grandVerticalScale,megaFrequency,megaHorizontalScale,megaVerticalScale,megaTallChance,megaLushChance,megaDripstoneChance,spaghettiFrequency,spaghettiWidth,backboneFrequency,backboneWidth,noodleFrequency,noodleWidth,bottomClearance,surfaceClearance,boundaryFade,boundaryWarp,surfaceOpeningFrequency,surfaceOpeningStrength,surfaceOpeningDepth,surfaceOpeningScale,surfaceOpeningSoftness,openCheese,openGrand,openSpaghetti,openBackbone,openNoodles,waterFrequency,waterScale,waterInChambers,lavaFrequency,lavaScale,lavaZoneHeight,lavaInBackbone,lavaInChambers,decorationSettings);}
         private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
             in.defaultReadObject();
             if (settingsVersion < 2) {
@@ -843,6 +1069,7 @@ public final class CaveSystemExporter extends AbstractCavesExporter<CaveSystem>
         private int dripstonePatchCoverage=50,smallDripstoneFrequency=25,largeDripstoneFrequency=56;
         private int largeDripstoneSpacing=32,largeDripstoneMaxRadius=19,largeDripstoneSearchHeight=96;
         private int settingsVersion=15;
+        private int generationVersion=GENERATION_L2_0_1_EXPERIMENTAL;
         private CaveDecorationSettings decorationSettings;
         private static final long serialVersionUID=1L;
     }

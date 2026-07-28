@@ -9,7 +9,7 @@
   </p>
 
   <p>
-    <img alt="Release" src="https://img.shields.io/badge/release-2.27.0--L2.0.0-e53935?style=for-the-badge">
+    <img alt="Release" src="https://img.shields.io/badge/release-2.27.0--L2.0.1-e53935?style=for-the-badge">
     <img alt="Base" src="https://img.shields.io/badge/base-WorldPainter%202.27.0-2d8cff?style=for-the-badge">
     <img alt="Languages" src="https://img.shields.io/badge/languages-EN%20%2B%209-6d4aff?style=for-the-badge">
     <img alt="License" src="https://img.shields.io/badge/license-GPLv3-43a047?style=for-the-badge">
@@ -33,7 +33,7 @@
 
 ## О проекте
 
-**WorldPainter Languages 2.27.0-L2.0.0** основан на **WorldPainter 2.27.0**.
+**WorldPainter Languages 2.27.0-L2.0.1** основан на **WorldPainter 2.27.0**.
 
 В релизе доступны английский и девять полных локализаций:
 
@@ -55,12 +55,12 @@
 
 | Файл | Назначение |
 | --- | --- |
-| `WorldPainter-Languages-2.27.0-L2.0.0-Setup.exe` | обычная установка в Windows, ярлыки и меню «Пуск» |
-| `WorldPainter-Languages-2.27.0-L2.0.0-Portable.zip` | переносимая сборка со встроенной Java-средой |
-| `WorldPainter-Languages-2.27.0-L2.0.0.zip` | чистый исходный код без сценариев релизной упаковки |
+| `WorldPainter-Languages-2.27.0-L2.0.1-Setup.exe` | обычная установка в Windows, ярлыки и меню «Пуск» |
+| `WorldPainter-Languages-2.27.0-L2.0.1-Portable.zip` | переносимая сборка со встроенной Java-средой |
+| `WorldPainter-Languages-2.27.0-L2.0.1.zip` | чистый исходный код без сценариев релизной упаковки |
 
 > [!NOTE]
-> Для большинства пользователей рекомендуется `WorldPainter-Languages-2.27.0-L2.0.0-Setup.exe`.
+> Для большинства пользователей рекомендуется `WorldPainter-Languages-2.27.0-L2.0.1-Setup.exe`.
 
 ## Главное в L2.0.0
 
@@ -124,7 +124,7 @@
 ## Установка
 
 1. Откройте [Releases](https://github.com/saplome/WorldPainter-LANGUAGES/releases).
-2. Скачайте `WorldPainter-Languages-2.27.0-L2.0.0-Setup.exe`.
+2. Скачайте `WorldPainter-Languages-2.27.0-L2.0.1-Setup.exe`.
 3. Запустите установщик и следуйте шагам.
 4. Выберите язык и тему в настройках WorldPainter.
 
@@ -134,7 +134,7 @@
 
 ## Portable
 
-1. Скачайте `WorldPainter-Languages-2.27.0-L2.0.0-Portable.zip`.
+1. Скачайте `WorldPainter-Languages-2.27.0-L2.0.1-Portable.zip`.
 2. Распакуйте архив в отдельную папку.
 3. Запустите `WorldPainter Languages.exe`.
 

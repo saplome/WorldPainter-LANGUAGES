@@ -29,6 +29,7 @@ import org.pepsoft.worldpainter.layers.Bo2Layer;
 import org.pepsoft.worldpainter.layers.exporters.ExporterSettings;
 import org.pepsoft.worldpainter.objects.WPObject;
 import org.pepsoft.worldpainter.plugins.CustomObjectManager;
+import org.pepsoft.worldpainter.util.FileUtils;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -52,7 +53,6 @@ import static java.lang.Math.round;
 import static java.lang.String.format;
 import static org.pepsoft.minecraft.Material.PERSISTENT;
 import static org.pepsoft.util.swing.MessageUtils.*;
-import static org.pepsoft.worldpainter.ExceptionHandler.doWithoutExceptionReporting;
 import static org.pepsoft.worldpainter.Platform.Capability.NAME_BASED;
 import static org.pepsoft.worldpainter.objects.WPObject.*;
 
@@ -263,84 +263,100 @@ public class Bo2LayerEditor extends AbstractLayerEditor<Bo2Layer> implements Lis
         buttonEdit.setEnabled(objectsSelected);
     }
     
-    private void addFilesOrDirectory() {
-        // Can't use FileUtils.selectFilesForOpen() because it doesn't support
-        // selecting directories, or adding custom components to the dialog
-        JFileChooser fileChooser = new JFileChooser();
-        Configuration config = Configuration.getInstance();
-        if ((config.getCustomObjectsDirectory() != null) && config.getCustomObjectsDirectory().isDirectory()) {
-            fileChooser.setCurrentDirectory(config.getCustomObjectsDirectory());
+    private org.pepsoft.worldpainter.util.FileFilter createObjectChooserFilter(CustomObjectManager customObjectManager) {
+        final CustomObjectManager.UniversalFileFilter fileFilter = customObjectManager.getFileFilter();
+        final String chooserExtensions = customObjectManager.getAllSupportedExtensions().stream()
+                .map(extension -> "*." + extension)
+                .collect(java.util.stream.Collectors.joining(";"));
+        return new org.pepsoft.worldpainter.util.FileFilter() {
+            @Override public boolean accept(File file) { return fileFilter.accept(file); }
+            @Override public String getDescription() { return fileFilter.getDescription(); }
+            @Override public String getExtensions() { return chooserExtensions; }
+        };
+    }
+
+    private void addFiles() {
+        final Configuration config = Configuration.getInstance();
+        final File initialDirectory = ((config.getCustomObjectsDirectory() != null) && config.getCustomObjectsDirectory().isDirectory())
+                ? config.getCustomObjectsDirectory() : null;
+        final CustomObjectManager customObjectManager = CustomObjectManager.getInstance();
+        final File[] selectedFiles = FileUtils.selectFilesForOpen(SwingUtilities.getWindowAncestor(this),
+                WPI18n.s("ui.dlg.selectObjectFiles"), initialDirectory, createObjectChooserFilter(customObjectManager));
+        if ((selectedFiles != null) && (selectedFiles.length > 0)) {
+            importObjectFiles(selectedFiles, selectedFiles[0].getParentFile());
         }
-        fileChooser.setDialogTitle(org.pepsoft.worldpainter.WPI18n.s("ui.dlg.selectFilesOrDir"));
-        fileChooser.setMultiSelectionEnabled(true);
-        fileChooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
-        CustomObjectManager.UniversalFileFilter fileFilter = CustomObjectManager.getInstance().getFileFilter();
-        fileChooser.setFileFilter(fileFilter);
-        WPObjectPreviewer previewer = new WPObjectPreviewer();
-        previewer.setDimension(App.getInstance().getDimension());
-        fileChooser.addPropertyChangeListener(JFileChooser.SELECTED_FILE_CHANGED_PROPERTY, previewer);
-        fileChooser.setAccessory(previewer);
-        if (doWithoutExceptionReporting(() -> fileChooser.showOpenDialog(this)) == JFileChooser.APPROVE_OPTION) {
-            File[] selectedFiles = fileChooser.getSelectedFiles();
-            if (selectedFiles.length > 0) {
-                Platform platform = context.getDimension().getWorld().getPlatform();
-                boolean checkForNameOnlyMaterials = ! platform.capabilities.contains(NAME_BASED);
-                Set<String> nameOnlyMaterialsNames = checkForNameOnlyMaterials ? new HashSet<>() : null;
-                config.setCustomObjectsDirectory(selectedFiles[0].getParentFile());
-                for (File selectedFile: selectedFiles) {
-                    if (selectedFile.isDirectory()) {
-                        if (fieldName.getText().isEmpty()) {
-                            String name = selectedFiles[0].getName();
-                            if (name.length() > 12) {
-                                name = "..." + name.substring(name.length() - 10);
-                            }
-                            fieldName.setText(name);
-                        }
-                        File[] files = selectedFile.listFiles((FilenameFilter) fileFilter);
-                        if (files == null) {
-                            beepAndShowError(this,
-                                    java.text.MessageFormat.format(org.pepsoft.worldpainter.WPI18n.s("ui.bo2.notValidDirectory.message"), selectedFile.getName()),
-                                    org.pepsoft.worldpainter.WPI18n.s("ui.bo2.notValidDirectory.title"));
-                        } else if (files.length == 0) {
-                            beepAndShowError(this,
-                                    java.text.MessageFormat.format(org.pepsoft.worldpainter.WPI18n.s("ui.bo2.noCustomObjectFiles.message"), selectedFile.getName()),
-                                    org.pepsoft.worldpainter.WPI18n.s("ui.bo2.noCustomObjectFiles.title"));
-                        } else {
-                            for (File file: files) {
-                                addFile(checkForNameOnlyMaterials, nameOnlyMaterialsNames, file);
-                            }
-                        }
-                    } else {
-                        if (fieldName.getText().isEmpty()) {
-                            String name = selectedFile.getName();
-                            int p = name.lastIndexOf('.');
-                            if (p != -1) {
-                                name = name.substring(0, p);
-                            }
-                            if (name.length() > 12) {
-                                name = "..." + name.substring(name.length() - 10);
-                            }
-                            fieldName.setText(name);
-                        }
-                        addFile(checkForNameOnlyMaterials, nameOnlyMaterialsNames, selectedFile);
-                    }
-                }
-                settingsChanged();
-                refreshLeafDecaySettings();
-                if (checkForNameOnlyMaterials && (! nameOnlyMaterialsNames.isEmpty())) {
-                    final String materialNames;
-                    if (nameOnlyMaterialsNames.size() > 4) {
-                        materialNames = MessageFormat.format(WPI18n.s("ui.bo2.incompatibleMaterials.more"),
-                                String.join(", ", new ArrayList<>(nameOnlyMaterialsNames).subList(0, 3)),
-                                nameOnlyMaterialsNames.size() - 3);
-                    } else {
-                        materialNames = String.join(", ", nameOnlyMaterialsNames);
-                    }
-                    beepAndShowWarning(this,
-                            MessageFormat.format(WPI18n.s("ui.bo2.incompatibleMaterials.message"), platform.displayName, materialNames),
-                            WPI18n.s("ui.bo2.incompatibleMaterials.title"));
-                }
+    }
+
+    private void addDirectory() {
+        final Configuration config = Configuration.getInstance();
+        final File initialDirectory = ((config.getCustomObjectsDirectory() != null) && config.getCustomObjectsDirectory().isDirectory())
+                ? config.getCustomObjectsDirectory() : null;
+        final CustomObjectManager customObjectManager = CustomObjectManager.getInstance();
+        final CustomObjectManager.UniversalFileFilter fileFilter = customObjectManager.getFileFilter();
+        final File selectedDirectory = FileUtils.selectDirectoryForOpen(SwingUtilities.getWindowAncestor(this),
+                WPI18n.s("ui.dlg.selectObjectFolder"), initialDirectory, WPI18n.s("ui.dlg.selectObjectFolder"), null);
+        if (selectedDirectory == null) return;
+        final File[] files = selectedDirectory.listFiles((FilenameFilter) fileFilter);
+        if (files == null) {
+            beepAndShowError(this, MessageFormat.format(WPI18n.s("ui.bo2.notValidDirectory.message"), selectedDirectory.getName()),
+                    WPI18n.s("ui.bo2.notValidDirectory.title"));
+            return;
+        }
+        if (files.length == 0) {
+            beepAndShowError(this, MessageFormat.format(WPI18n.s("ui.bo2.noCustomObjectFiles.message"), selectedDirectory.getName()),
+                    WPI18n.s("ui.bo2.noCustomObjectFiles.title"));
+            return;
+        }
+        Arrays.sort(files, Comparator.comparing(File::getName, String.CASE_INSENSITIVE_ORDER));
+        final Map<String, Integer> extensionCounts = new TreeMap<>();
+        for (File file: files) {
+            final String name = file.getName();
+            final int dot = name.lastIndexOf('.');
+            final String extension = (dot >= 0) ? name.substring(dot).toLowerCase(Locale.ROOT) : WPI18n.s("ui.bo2.extensionOther");
+            extensionCounts.merge(extension, 1, Integer::sum);
+        }
+        final String details = extensionCounts.entrySet().stream()
+                .map(entry -> entry.getKey() + ": " + entry.getValue())
+                .collect(java.util.stream.Collectors.joining("\n"));
+        final int result = JOptionPane.showConfirmDialog(this,
+                MessageFormat.format(WPI18n.s("ui.bo2.folderImport.message"), files.length, selectedDirectory.getName(), details),
+                WPI18n.s("ui.bo2.folderImport.title"), JOptionPane.OK_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE);
+        if (result == JOptionPane.OK_OPTION) {
+            if (fieldName.getText().isEmpty()) {
+                String name = selectedDirectory.getName();
+                if (name.length() > 12) name = "..." + name.substring(name.length() - 10);
+                fieldName.setText(name);
             }
+            importObjectFiles(files, selectedDirectory);
+        }
+    }
+
+    private void importObjectFiles(File[] selectedFiles, File sourceDirectory) {
+        final Configuration config = Configuration.getInstance();
+        final Platform platform = context.getDimension().getWorld().getPlatform();
+        final boolean checkForNameOnlyMaterials = ! platform.capabilities.contains(NAME_BASED);
+        final Set<String> nameOnlyMaterialsNames = checkForNameOnlyMaterials ? new HashSet<>() : null;
+        config.setCustomObjectsDirectory(sourceDirectory);
+        if (fieldName.getText().isEmpty()) {
+            String name = selectedFiles[0].getName();
+            final int dot = name.lastIndexOf('.');
+            if (dot != -1) name = name.substring(0, dot);
+            if (name.length() > 12) name = "..." + name.substring(name.length() - 10);
+            fieldName.setText(name);
+        }
+        for (File selectedFile: selectedFiles) addFile(checkForNameOnlyMaterials, nameOnlyMaterialsNames, selectedFile);
+        settingsChanged();
+        refreshLeafDecaySettings();
+        if (checkForNameOnlyMaterials && (! nameOnlyMaterialsNames.isEmpty())) {
+            final String materialNames;
+            if (nameOnlyMaterialsNames.size() > 4) {
+                materialNames = MessageFormat.format(WPI18n.s("ui.bo2.incompatibleMaterials.more"),
+                        String.join(", ", new ArrayList<>(nameOnlyMaterialsNames).subList(0, 3)), nameOnlyMaterialsNames.size() - 3);
+            } else {
+                materialNames = String.join(", ", nameOnlyMaterialsNames);
+            }
+            beepAndShowWarning(this, MessageFormat.format(WPI18n.s("ui.bo2.incompatibleMaterials.message"), platform.displayName, materialNames),
+                    WPI18n.s("ui.bo2.incompatibleMaterials.title"));
         }
     }
 
@@ -626,6 +642,7 @@ public class Bo2LayerEditor extends AbstractLayerEditor<Bo2Layer> implements Lis
         paintPicker1 = new org.pepsoft.worldpainter.layers.renderers.PaintPicker();
         jLabel2 = new javax.swing.JLabel();
         buttonAddFile = new javax.swing.JButton();
+        buttonAddDirectory = new javax.swing.JButton();
         buttonRemoveFile = new javax.swing.JButton();
         jLabel7 = new javax.swing.JLabel();
         spinnerBlocksPerAttempt = new javax.swing.JSpinner();
@@ -777,11 +794,20 @@ public class Bo2LayerEditor extends AbstractLayerEditor<Bo2Layer> implements Lis
         jLabel2.setText(org.pepsoft.worldpainter.WPI18n.s("ui.field.objectS"));
 
         buttonAddFile.setIcon(org.pepsoft.util.IconUtils.loadScaledIcon("org/pepsoft/worldpainter/icons/brick_add.png")); // NOI18N
-        buttonAddFile.setToolTipText(org.pepsoft.worldpainter.WPI18n.s("ui.action.addOneOrMore"));
+        buttonAddFile.setToolTipText(org.pepsoft.worldpainter.WPI18n.s("ui.action.addObjectFiles"));
         buttonAddFile.setMargin(new java.awt.Insets(2, 2, 2, 2));
         buttonAddFile.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 buttonAddFileActionPerformed(evt);
+            }
+        });
+
+        buttonAddDirectory.setIcon(org.pepsoft.util.IconUtils.loadScaledIcon("org/pepsoft/worldpainter/icons/folder_page_white.png")); // NOI18N
+        buttonAddDirectory.setToolTipText(org.pepsoft.worldpainter.WPI18n.s("ui.action.addObjectFolder"));
+        buttonAddDirectory.setMargin(new java.awt.Insets(2, 2, 2, 2));
+        buttonAddDirectory.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                buttonAddDirectoryActionPerformed(evt);
             }
         });
 
@@ -845,6 +871,7 @@ public class Bo2LayerEditor extends AbstractLayerEditor<Bo2Layer> implements Lis
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(buttonAddFile, javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(buttonAddDirectory, javax.swing.GroupLayout.Alignment.TRAILING)
                     .addComponent(buttonRemoveFile, javax.swing.GroupLayout.Alignment.TRAILING)
                     .addComponent(buttonEdit, javax.swing.GroupLayout.Alignment.TRAILING)
                     .addComponent(buttonReloadAll, javax.swing.GroupLayout.Alignment.TRAILING)))
@@ -898,6 +925,8 @@ public class Bo2LayerEditor extends AbstractLayerEditor<Bo2Layer> implements Lis
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(buttonAddFile)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(buttonAddDirectory)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(buttonRemoveFile)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -978,8 +1007,12 @@ public class Bo2LayerEditor extends AbstractLayerEditor<Bo2Layer> implements Lis
     }//GEN-LAST:event_jLabel6MouseClicked
 
     private void buttonAddFileActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonAddFileActionPerformed
-        addFilesOrDirectory();
+        addFiles();
     }//GEN-LAST:event_buttonAddFileActionPerformed
+
+    private void buttonAddDirectoryActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonAddDirectoryActionPerformed
+        addDirectory();
+    }//GEN-LAST:event_buttonAddDirectoryActionPerformed
 
     private void buttonRemoveFileActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonRemoveFileActionPerformed
         removeFiles();
@@ -1001,6 +1034,7 @@ public class Bo2LayerEditor extends AbstractLayerEditor<Bo2Layer> implements Lis
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton buttonAddDirectory;
     private javax.swing.JButton buttonAddFile;
     private javax.swing.JButton buttonEdit;
     private javax.swing.JButton buttonReloadAll;

@@ -98,10 +98,10 @@
             <scope>runtime</scope>
         </dependency>
         <dependency>
-            <!-- WorldPainter Languages fork (L65): Windows Vista+ IFileDialog based modern file picker. -->
-            <groupId>com.github.steos</groupId>
-            <artifactId>jnafilechooser</artifactId>
-            <version>1.1.2</version>
+            <!-- Direct Windows Vista+ IFileOpenDialog/IFileSaveDialog integration. -->
+            <groupId>net.java.dev.jna</groupId>
+            <artifactId>jna</artifactId>
+            <version>5.13.0</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
