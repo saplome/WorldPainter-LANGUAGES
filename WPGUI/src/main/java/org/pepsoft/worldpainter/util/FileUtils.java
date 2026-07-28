@@ -32,9 +32,11 @@ public class FileUtils {
         try {
             if (SystemUtils.isWindows()) {
                 try {
-                    return WindowsModernFileDialog.selectFile(parent, title, fileOrDir, fileFilter, false);
+                    return WindowsExplorerFileDialog.selectFile(parent, title, fileOrDir, fileFilter, false);
                 } catch (RuntimeException e) {
-                    logger.error("{} while using Windows IFileDialog; falling back to JFileChooser (message: \"{}\")", e.getClass().getSimpleName(), e.getMessage(), e);
+                    logger.error("{} while using the Windows Explorer open dialog; no legacy chooser will be shown (message: \"{}\")",
+                            e.getClass().getSimpleName(), e.getMessage(), e);
+                    return null;
                 }
             } else if (SystemUtils.isMac()) {
                 try {
@@ -82,38 +84,34 @@ public class FileUtils {
      * @return The selected directory, or {@code null} if the user cancelled the dialog.
      */
     public static File selectDirectoryForOpen(Window parent, String title, File dir, String description, FileView fileView) {
+        return selectDirectoryForOpen(parent, title, dir, description, fileView, null);
+    }
+
+    public static File selectDirectoryForOpen(Window parent, String title, File dir, String description, FileView fileView,
+                                              FileFilter visibleFileFilter) {
         final Boolean old = UIManager.getBoolean("FileChooser.readOnly");
         UIManager.put("FileChooser.readOnly", TRUE);
         try {
-            // No fallback for Mac or on exceptions because we need the FileView support for Minecraft map selection,
-            // and directory selection doesn't work in FileDialog on Windows
-            final JFileChooser fileChooser;
-            if (dir != null) {
-                fileChooser = new JFileChooser(dir);
-            } else {
-                fileChooser = new JFileChooser();
+            if (SystemUtils.isWindows()) {
+                try {
+                    return WindowsExplorerFileDialog.selectDirectory(parent, title, dir,
+                            org.pepsoft.worldpainter.WPI18n.s("ui.filePicker.selectFolder"));
+                } catch (RuntimeException e) {
+                    logger.error("{} while using the Windows Explorer folder dialog; no legacy chooser will be shown (message: \"{}\")",
+                            e.getClass().getSimpleName(), e.getMessage(), e);
+                    return null;
+                }
             }
+            final JFileChooser fileChooser = (dir != null) ? new JFileChooser(dir) : new JFileChooser();
             fileChooser.setDialogTitle(title);
             fileChooser.setFileFilter(new javax.swing.filechooser.FileFilter() {
-                @Override
-                public boolean accept(File f) {
-                    return f.isDirectory();
-                }
-
-                @Override
-                public String getDescription() {
-                    return description;
-                }
+                @Override public boolean accept(File f) { return f.isDirectory(); }
+                @Override public String getDescription() { return description; }
             });
             fileChooser.setFileSelectionMode(FILES_AND_DIRECTORIES);
-            if (fileView != null) {
-                fileChooser.setFileView(fileView);
-            }
-            if (ExceptionHandler.doWithoutExceptionReporting(() -> fileChooser.showOpenDialog(parent)) == APPROVE_OPTION) {
-                return fileChooser.getSelectedFile();
-            } else {
-                return null;
-            }
+            if (fileView != null) fileChooser.setFileView(fileView);
+            return (ExceptionHandler.doWithoutExceptionReporting(() -> fileChooser.showOpenDialog(parent)) == APPROVE_OPTION)
+                    ? fileChooser.getSelectedFile() : null;
         } finally {
             UIManager.put("FileChooser.readOnly", old);
         }
@@ -134,9 +132,11 @@ public class FileUtils {
         try {
             if (SystemUtils.isWindows()) {
                 try {
-                    return WindowsModernFileDialog.selectFiles(parent, title, fileOrDir, fileFilter, true, false);
+                    return WindowsExplorerFileDialog.selectFiles(parent, title, fileOrDir, fileFilter);
                 } catch (RuntimeException e) {
-                    logger.error("{} while using Windows IFileDialog; falling back to JFileChooser (message: \"{}\")", e.getClass().getSimpleName(), e.getMessage(), e);
+                    logger.error("{} while using the Windows Explorer multi-file dialog; no legacy chooser will be shown (message: \"{}\")",
+                            e.getClass().getSimpleName(), e.getMessage(), e);
+                    return null;
                 }
             } else if (SystemUtils.isMac()) {
                 try {
@@ -175,6 +175,46 @@ public class FileUtils {
         }
     }
 
+    /** Select one or more files, or one directory, using Explorer-native dialogs on Windows. */
+    public static File[] selectFilesOrDirectoriesForOpen(Window parent, String title, File fileOrDir, final FileFilter fileFilter) {
+        if (SystemUtils.isWindows()) {
+            final Object[] options = {
+                    org.pepsoft.worldpainter.WPI18n.s("ui.filePicker.selectFiles"),
+                    org.pepsoft.worldpainter.WPI18n.s("ui.filePicker.selectFolder"),
+                    org.pepsoft.worldpainter.WPI18n.s("ui.button.cancel")
+            };
+            final int choice = JOptionPane.showOptionDialog(parent,
+                    org.pepsoft.worldpainter.WPI18n.s("ui.filePicker.chooseSource"), title,
+                    JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
+            if (choice == 0) return selectFilesForOpen(parent, title, fileOrDir, fileFilter);
+            if (choice == 1) {
+                final File directory = selectDirectoryForOpen(parent, title,
+                        ((fileOrDir != null) && fileOrDir.isFile()) ? fileOrDir.getParentFile() : fileOrDir,
+                        fileFilter.getDescription(), null, fileFilter);
+                return (directory != null) ? new File[] {directory} : null;
+            }
+            return null;
+        }
+        final Boolean old = UIManager.getBoolean("FileChooser.readOnly");
+        UIManager.put("FileChooser.readOnly", TRUE);
+        try {
+            final JFileChooser fileChooser = (fileOrDir != null) ? new JFileChooser(fileOrDir) : new JFileChooser();
+            fileChooser.setMultiSelectionEnabled(true);
+            fileChooser.setDialogTitle(title);
+            fileChooser.setFileFilter(fileFilter);
+            fileChooser.setFileSelectionMode(FILES_AND_DIRECTORIES);
+            if (doWithoutExceptionReporting(() -> fileChooser.showOpenDialog(parent)) == APPROVE_OPTION) {
+                final File[] files = fileChooser.getSelectedFiles();
+                if ((files == null) || (files.length == 0)) {
+                    final File file = fileChooser.getSelectedFile();
+                    return (file != null) ? new File[] {file} : null;
+                }
+                return files;
+            }
+            return null;
+        } finally { UIManager.put("FileChooser.readOnly", old); }
+    }
+
     /**
      * Select a single filename for saving. May be the name of an existing file, or a non-existent file.
      *
@@ -187,9 +227,11 @@ public class FileUtils {
     public static File selectFileForSave(Window parent, String title, File fileOrDir, final FileFilter fileFilter) {
         if (SystemUtils.isWindows()) {
             try {
-                return WindowsModernFileDialog.selectFile(parent, title, fileOrDir, fileFilter, true);
+                return WindowsExplorerFileDialog.selectFile(parent, title, fileOrDir, fileFilter, true);
             } catch (RuntimeException e) {
-                logger.error("{} while using Windows IFileDialog; falling back to JFileChooser (message: \"{}\")", e.getClass().getSimpleName(), e.getMessage(), e);
+                logger.error("{} while using the Windows Explorer save dialog; no legacy chooser will be shown (message: \"{}\")",
+                        e.getClass().getSimpleName(), e.getMessage(), e);
+                return null;
             }
         } else if (SystemUtils.isMac()) {
             try {

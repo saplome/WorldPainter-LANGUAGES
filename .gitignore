@@ -1,6 +1,7 @@
 # Build output
 target/
 release/
+release/github/
 WorldPainter-LANGUAGES-RELEASE/
 *.class
 *.jar

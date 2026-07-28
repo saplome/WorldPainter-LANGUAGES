@@ -462,14 +462,10 @@ public class ExportWorldDialog extends WPDialogWithPaintSelection {
     }
 
     private void selectDir() {
-        // Can't use FileUtils.selectFileForOpen() since it doesn't support
-        // selecting a directory
-        JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setSelectedFile(new File(fieldDirectory.getText().trim()));
-        fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-        if (doWithoutExceptionReporting(() -> fileChooser.showOpenDialog(this)) == JFileChooser.APPROVE_OPTION) {
-            fieldDirectory.setText(fileChooser.getSelectedFile().getAbsolutePath());
-        }
+        final File selectedDirectory = org.pepsoft.worldpainter.util.FileUtils.selectDirectoryForOpen(this,
+                org.pepsoft.worldpainter.WPI18n.s("ui.field.directoryToExportThe"),
+                new File(fieldDirectory.getText().trim()), org.pepsoft.worldpainter.WPI18n.s("ui.field.directory"), null);
+        if (selectedDirectory != null) fieldDirectory.setText(selectedDirectory.getAbsolutePath());
     }
     
     private void changePlatform() {
