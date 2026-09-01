@@ -1,7 +1,7 @@
 # Build output
 target/
-release/
-release/github/
+# Anchored to the project root: tools/release holds the packaging scripts, which have to be tracked.
+/release/
 WorldPainter-LANGUAGES-RELEASE/
 *.class
 *.jar
