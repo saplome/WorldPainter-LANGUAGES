@@ -280,12 +280,12 @@ public final class Configuration implements Serializable, EventLogger, Minecraft
         this.checkForUpdates = checkForUpdates;
     }
 
-    public synchronized int getDismissedForkUpdateRevision() {
-        return dismissedForkUpdateRevision;
+    public synchronized String getDismissedForkUpdateTag() {
+        return dismissedForkUpdateTag;
     }
 
-    public synchronized void setDismissedForkUpdateRevision(int dismissedForkUpdateRevision) {
-        this.dismissedForkUpdateRevision = dismissedForkUpdateRevision;
+    public synchronized void setDismissedForkUpdateTag(String dismissedForkUpdateTag) {
+        this.dismissedForkUpdateTag = dismissedForkUpdateTag;
     }
 
     public synchronized int getDefaultContourSeparation() {
@@ -1439,8 +1439,9 @@ public final class Configuration implements Serializable, EventLogger, Minecraft
     @Deprecated
     private int colourschemeIndex;
     private int launchCount;
-    // L66: latest fork release for which the user selected "do not remind". A newer release is shown again.
-    private int dismissedForkUpdateRevision;
+    // L66: release tag the user selected "do not remind" for. Any other newer release is announced again. Configurations
+    // written before L2.1.0 carry an int revision under a different name, which deserialisation simply drops.
+    private String dismissedForkUpdateTag;
     private Map<Integer, File> minecraftJars = new HashMap<>();
     private DonationStatus donationStatus;
     private UUID uuid = UUID.randomUUID();
