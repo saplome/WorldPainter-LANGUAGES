@@ -532,8 +532,9 @@ public final class WPI18n {
     /**
      * Available UI languages as an ordered map of code -> display name, read from
      * the resource file languages.list (which lives next to the string bundles).
-     * To add a language, drop the five localized bundle files
-     * (strings/blocks/gamedata/layers/swing)_<code>.properties into that folder
+     * To add a language, drop the nine localized bundle files
+     * (strings/blocks/gamedata/layers/swing/Category/GameType/Generator/LightOrigin)_&lt;code&gt;.properties
+     * into that folder
      * and add a "<code> = <display name>" line to languages.list -- no code
      * changes required. English ("en") is always available as a fallback.
      */
