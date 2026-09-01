@@ -6,7 +6,7 @@
 ;   powershell -ExecutionPolicy Bypass -File .\tools\windows-packaging\build-windows-installer.ps1 -BuildInnoInstaller
 
 #define MyAppName "WorldPainter Languages"
-#define MyAppVersion "2.27.0-L2.0.1"
+#define MyAppVersion "2.27.1-L2.1.0"
 #define MyAppPublisher "WorldPainter Languages"
 #define MyAppURL "https://github.com/saplome/WorldPainter-LANGUAGES"
 #define MyAppExeName "WorldPainter Languages.exe"

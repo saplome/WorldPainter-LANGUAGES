@@ -9,25 +9,32 @@ param(
     [switch]$BuildInnoInstaller,
     [switch]$CreateDraftRelease,
     [switch]$OpenDraftRelease,
-    [string]$ReleaseTag = 'v2.27.0-L2.0.1',
-    [string]$ReleaseTitle = 'WorldPainter Languages 2.27.0-L2.0.1',
+    [string]$ReleaseTag = 'v2.27.1-L2.1.0',
+    [string]$ReleaseTitle = 'WorldPainter Languages 2.27.1-L2.1.0',
     [string]$ReleaseNotesFile = '',
     [string[]]$AdditionalDraftAsset = @(),
     [switch]$GenerateUpdateManifest,
     [string]$UpdateManifestUrl = 'https://github.com/saplome/WorldPainter-LANGUAGES/releases/latest/download/update-manifest.txt',
-    [string]$UpdateBaseUrl = ''
+    [string]$UpdateBaseUrl = 'https://raw.githubusercontent.com/saplome/WorldPainter-LANGUAGES-cdn/main/app',
+    # app directory of the previous release. Files that exist there but not in this build become delete= entries in the
+    # manifest, so installations of the previous release do not keep obsolete jars forever. Defaults to the installed
+    # copy, which is exactly what the update has to clean up.
+    [string]$PreviousAppDir = 'C:\Program Files\WorldPainter Languages\app'
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 $ProductName = 'WorldPainter Languages'
-$ProductVersion = '2.27.0-L2.0.1'
-$WindowsInstallerVersion = '2.27.4'
+$ProductVersion = '2.27.1-L2.1.0'
+# Numeric Windows file/product version derived from both halves of $ProductVersion:
+#   <base major>.<base minor>.<base patch * 1000 + fork major * 100 + fork minor * 10 + fork patch>
+# 2.27.0-L2.0.1 -> 2.27.201, 2.27.1-L2.1.0 -> 2.27.1210. Keep it monotonic across releases.
+$WindowsInstallerVersion = '2.27.1210'
 $WindowsUpgradeUuid = 'd5984a7f-cb32-48c8-b6f1-97a3c4c0da44'
 $ProductVendor = 'WorldPainter Languages'
 $ProductDescription = 'WorldPainter Languages'
-$MavenVersion = '2.27.0'
+$MavenVersion = '2.27.1'
 $MainClass = 'org.pepsoft.worldpainter.Main'
 $UpdaterMainClass = 'org.pepsoft.worldpainter.updater.WPUpdater'
 $JPackageEnabled = [bool]$BuildInstaller
@@ -45,11 +52,16 @@ $InstallerWorkDir = Join-Path $ReleaseDir 'installer-work'
 $AppImageDir = Join-Path $ReleaseDir 'app-image'
 $PortableZipPath = Join-Path $ReleaseDir "WorldPainter-Languages-$ProductVersion-Portable.zip"
 $GitHubRepository = 'saplome/WorldPainter-LANGUAGES'
-$DefaultReleaseNotesPath = Join-Path $ProjectRoot 'docs\RELEASE_NOTES_2.27.0-L2.0.1.md'
+$DefaultReleaseNotesPath = Join-Path $ProjectRoot 'docs\RELEASE_NOTES_2.27.1-L2.1.0.md'
 $LogsDir = Join-Path $ReleaseDir 'logs'
 $UpdaterSourcePath = Join-Path $ProjectRoot 'tools\updater\WPUpdater.java'
 $UpdateLauncherPropsPath = Join-Path $StagingDir 'update-launcher.properties'
 $UpdateManifestPath = Join-Path $ReleaseDir 'update-manifest.txt'
+$CdnDir = Join-Path $ReleaseDir 'cdn'
+# The updater jar carries the release version in its name. The running updater holds its own jar open, so a fixed name
+# could never be replaced by the updater itself; a versioned name arrives as a new file and the launcher .cfg (which is
+# part of the update) switches over to it.
+$UpdaterJarName = "wp-updater-$ProductVersion.jar"
 
 function Fail {
     param([string]$Message)
@@ -225,20 +237,20 @@ function New-UpdaterStaging {
     Write-Host "Compiling updater: $UpdaterSourcePath"
     Invoke-Checked 'javac' @('--release', '17', '-d', $updaterClassesDir, $UpdaterSourcePath)
 
-    $updaterJarPath = Join-Path $AppDir 'wp-updater.jar'
+    $updaterJarPath = Join-Path $AppDir $UpdaterJarName
     if (Test-Path -LiteralPath $updaterJarPath) {
         Remove-Item -LiteralPath $updaterJarPath -Force
     }
     Invoke-Checked 'jar' @('cfe', $updaterJarPath, $UpdaterMainClass, '-C', $updaterClassesDir, '.')
 
     @(
-        '# Configuration for wp-updater.jar (WorldPainter-Update.exe)'
+        "# Configuration for $UpdaterJarName (WorldPainter-Update.exe)"
         "manifestUrl=$UpdateManifestUrl"
         "launch=../$ProductName.exe"
     ) | Set-Content -LiteralPath (Join-Path $AppDir 'updater.properties') -Encoding ascii
 
     @(
-        'main-jar=wp-updater.jar'
+        "main-jar=$UpdaterJarName"
         "main-class=$UpdaterMainClass"
         'win-console=true'
         'win-shortcut=false'
@@ -247,16 +259,52 @@ function New-UpdaterStaging {
     Write-Host "Updater staged: $updaterJarPath"
 }
 
+function Get-RelativeFileMap {
+    param([string]$Directory)
+
+    $map = @{}
+    $prefixLength = $Directory.TrimEnd('\').Length + 1
+    foreach ($file in Get-ChildItem -LiteralPath $Directory -Recurse -File -ErrorAction Stop) {
+        $relative = $file.FullName.Substring($prefixLength) -replace '\\', '/'
+        $map[$relative] = $file
+    }
+    return $map
+}
+
 function New-UpdateManifest {
+    param([string]$SourceAppDir)
+
     if (-not $UpdateBaseUrl) {
         Fail "-GenerateUpdateManifest requires -UpdateBaseUrl <url> (base URL under which the app directory will be hosted)."
     }
+    if (-not (Test-Path -LiteralPath $SourceAppDir)) {
+        Fail "Update manifest source directory was not found: $SourceAppDir"
+    }
 
     $baseUrl = $UpdateBaseUrl.TrimEnd('/')
-    $excludedNames = @('wp-updater.jar', 'updater.properties')
-    $files = @(Get-ChildItem -LiteralPath $AppDir -Recurse -File | Where-Object { $excludedNames -notcontains $_.Name } | Sort-Object FullName)
-    if ($files.Count -eq 0) {
-        Fail "No files were found in $AppDir for the update manifest."
+    # The manifest is generated from the jpackage app image, not from the staging directory, because the image also
+    # contains the generated .cfg launcher files. Those carry the class path, so they change whenever a jar is renamed.
+    $currentFiles = Get-RelativeFileMap $SourceAppDir
+    if ($currentFiles.Count -eq 0) {
+        Fail "No files were found in $SourceAppDir for the update manifest."
+    }
+
+    $obsolete = @()
+    if ($PreviousAppDir -and (Test-Path -LiteralPath $PreviousAppDir)) {
+        $previousFiles = Get-RelativeFileMap $PreviousAppDir
+        $obsolete = @($previousFiles.Keys | Where-Object { -not $currentFiles.ContainsKey($_) } | Sort-Object)
+        # The updater jar of the previous release is exactly the jar that performs this update, and Windows keeps it
+        # open, so a delete= entry for it can only ever fail. Older updaters treat that failure as fatal and abort
+        # after the new files are already in place. The updater removes leftover wp-updater*.jar files itself, on the
+        # next run, when it no longer runs from them.
+        $selfDeletes = @($obsolete | Where-Object { $_ -like 'wp-updater*.jar' })
+        if ($selfDeletes.Count -gt 0) {
+            $obsolete = @($obsolete | Where-Object { $_ -notlike 'wp-updater*.jar' })
+            Write-Host "Skipping delete entries for the previous updater jar(s): $($selfDeletes -join ', ')"
+        }
+        Write-Host "Previous release app directory: $PreviousAppDir ($($previousFiles.Count) files, $($obsolete.Count) obsolete)"
+    } else {
+        Write-Warning "No previous app directory at '$PreviousAppDir'; the manifest will not delete any obsolete files."
     }
 
     $lines = New-Object System.Collections.Generic.List[string]
@@ -266,17 +314,85 @@ function New-UpdateManifest {
     $lines.Add("version=$ProductVersion")
 
     $totalBytes = [long]0
-    foreach ($file in $files) {
-        $relativePath = $file.FullName.Substring($AppDir.Length + 1) -replace '\\', '/'
+    foreach ($relativePath in ($currentFiles.Keys | Sort-Object)) {
+        $file = $currentFiles[$relativePath]
         $hash = (Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
         $encodedPath = (($relativePath -split '/') | ForEach-Object { [uri]::EscapeDataString($_) }) -join '/'
         $lines.Add("file=$hash`t$($file.Length)`t$relativePath`t$baseUrl/$encodedPath")
         $totalBytes += $file.Length
     }
+    foreach ($relativePath in $obsolete) {
+        $lines.Add("delete=$relativePath")
+    }
     $lines.Add('')
 
     [System.IO.File]::WriteAllText($UpdateManifestPath, ($lines -join "`n"), (New-Object System.Text.UTF8Encoding($false)))
-    Write-Host "Update manifest created: $UpdateManifestPath ($($files.Count) files, $totalBytes bytes covered)"
+    Write-Host "Update manifest created: $UpdateManifestPath ($($currentFiles.Count) files, $totalBytes bytes covered, $($obsolete.Count) deletions)"
+    Write-Host "  Source: $SourceAppDir"
+    Write-Host "  Base URL: $baseUrl"
+}
+
+function New-CdnPayload {
+    param([string]$SourceAppDir)
+
+    # Everything the updater downloads is served from a plain repository, because GitHub release assets are flat and
+    # cannot carry the app/lib/... layout. This produces the exact directory to push, so the published hashes and the
+    # served bytes can never drift apart.
+    Ensure-CleanDirectory $CdnDir
+    $cdnAppDir = Join-Path $CdnDir 'app'
+    Copy-Item -LiteralPath $SourceAppDir -Destination $cdnAppDir -Recurse -Force
+
+    Copy-Item -LiteralPath $UpdateManifestPath -Destination (Join-Path $CdnDir 'update-manifest.txt') -Force
+
+    # The client compares the SHA-256 of the served bytes with the manifest, so git must not touch a single byte. With
+    # the usual Windows core.autocrlf=true, the .cfg and .properties files of the app image would be committed with LF
+    # instead of CRLF and every download would be rejected as corrupted.
+    @(
+        '# Do not let git normalise anything: the updater verifies SHA-256 of the served bytes.'
+        '* -text'
+    ) | Set-Content -LiteralPath (Join-Path $CdnDir '.gitattributes') -Encoding ascii
+
+    $readmePath = Join-Path $CdnDir 'README.md'
+    @(
+        '# WorldPainter Languages update CDN'
+        ''
+        'Download host for the incremental updater of'
+        '[WorldPainter Languages](https://github.com/saplome/WorldPainter-LANGUAGES).'
+        ''
+        "Current contents: application files of **$ProductVersion**."
+        ''
+        '`app/` mirrors the `app/` directory of an installation one to one. `WorldPainter-Update.exe` reads'
+        '`update-manifest.txt` from the release assets of the main repository and downloads only the files whose'
+        'SHA-256 differs, from:'
+        ''
+        '```'
+        "$($UpdateBaseUrl.TrimEnd('/'))/<path inside app>"
+        '```'
+        ''
+        '`update-manifest.txt` is copied here for reference only; the client always reads the copy attached to the'
+        'release in the main repository.'
+        ''
+        '## Updating this repository for a new release'
+        ''
+        '1. Replace `app/` with the `app/` directory of the new build.'
+        '2. Commit and push to `main` **before** publishing the GitHub release, so every URL in the new manifest'
+        '   already resolves.'
+        '3. Upload the new `update-manifest.txt` as an asset of the release in the main repository.'
+        ''
+        'Keep `.gitattributes` (`* -text`) in place. The updater verifies SHA-256 of the served bytes, so any'
+        'end-of-line normalisation by git would break every download of the `.cfg` and `.properties` files.'
+        ''
+        'Do not enable Git LFS here either: `raw.githubusercontent.com` would serve the LFS pointer text instead of'
+        'the file.'
+        ''
+        'No license file of its own: these are build artifacts of WorldPainter Languages (GPLv3).'
+    ) | Set-Content -LiteralPath $readmePath -Encoding utf8
+
+    $files = @(Get-ChildItem -LiteralPath $cdnAppDir -Recurse -File)
+    $totalBytes = ($files | Measure-Object Length -Sum).Sum
+    Write-Host ""
+    Write-Host "CDN payload ready to push: $CdnDir"
+    Write-Host "  app/ files: $($files.Count), $([math]::Round($totalBytes / 1MB, 2)) MB"
 }
 
 function Show-StagingContents {
@@ -558,6 +674,48 @@ function Sync-GitHubDraftRelease {
     }
 }
 
+function Assert-VersionConsistency {
+    # A version typo here is invisible until the build is already on users' machines: the update check inside the
+    # application compares its own CURRENT_FORK_VERSION against the release tag, so a stale constant makes every copy
+    # either offer an update to the version it already runs, or never notice the release at all.
+    $match = [regex]::Match($ProductVersion, '^(\d+)\.(\d+)\.(\d+)-L(\d+)\.(\d+)\.(\d+)$')
+    if (-not $match.Success) {
+        Fail "ProductVersion '$ProductVersion' is not <major>.<minor>.<patch>-L<major>.<minor>.<patch>."
+    }
+    $baseVersion = '{0}.{1}.{2}' -f $match.Groups[1].Value, $match.Groups[2].Value, $match.Groups[3].Value
+    $forkVersion = '{0}.{1}.{2}' -f $match.Groups[4].Value, $match.Groups[5].Value, $match.Groups[6].Value
+
+    if ($baseVersion -ne $MavenVersion) {
+        Fail "ProductVersion base '$baseVersion' does not match MavenVersion '$MavenVersion'."
+    }
+    $pomVersion = ([xml](Get-Content -LiteralPath (Join-Path $ProjectRoot 'pom.xml') -Raw)).project.version
+    if ($pomVersion -ne $MavenVersion) {
+        Fail "pom.xml declares version '$pomVersion', but this build expects '$MavenVersion'."
+    }
+
+    $checkerPath = Join-Path $ProjectRoot 'WPGUI\src\main\java\org\pepsoft\worldpainter\ForkUpdateChecker.java'
+    $checkerMatch = [regex]::Match((Get-Content -LiteralPath $checkerPath -Raw), 'CURRENT_FORK_VERSION\s*=\s*"([^"]+)"')
+    if (-not $checkerMatch.Success) {
+        Fail "Could not read CURRENT_FORK_VERSION from $checkerPath."
+    }
+    if ($checkerMatch.Groups[1].Value -ne $forkVersion) {
+        Fail ("ForkUpdateChecker.CURRENT_FORK_VERSION is '{0}', but this build is L{1}: the shipped update check would compare against the wrong version." -f $checkerMatch.Groups[1].Value, $forkVersion)
+    }
+
+    $expectedWindowsVersion = '{0}.{1}.{2}' -f $match.Groups[1].Value, $match.Groups[2].Value,
+        (([int]$match.Groups[3].Value * 1000) + ([int]$match.Groups[4].Value * 100) + ([int]$match.Groups[5].Value * 10) + [int]$match.Groups[6].Value)
+    if ($WindowsInstallerVersion -ne $expectedWindowsVersion) {
+        Fail "WindowsInstallerVersion '$WindowsInstallerVersion' does not match '$expectedWindowsVersion' derived from '$ProductVersion'."
+    }
+
+    $expectedNotesName = "RELEASE_NOTES_$ProductVersion.md"
+    if ((Split-Path -Leaf $DefaultReleaseNotesPath) -ne $expectedNotesName) {
+        Fail "DefaultReleaseNotesPath points at '$(Split-Path -Leaf $DefaultReleaseNotesPath)' instead of '$expectedNotesName'."
+    }
+
+    Write-Host "Version consistency: base $baseVersion, fork L$forkVersion, Windows $WindowsInstallerVersion - all sources agree"
+}
+
 Write-Host "WorldPainter Languages Windows installer preparation"
 Write-Host "Product: $ProductName"
 Write-Host "Version: $ProductVersion"
@@ -576,6 +734,9 @@ Write-Host "Logs path: $LogsDir"
 Write-Host "Installer icon: $IconIcoPath"
 Write-Host "jpackage resources: $JPackageResourceDir"
 Write-Host "jpackage execution: $(if ($JPackageEnabled) { 'enabled' } else { 'disabled, preparation only' })"
+Write-Host ""
+
+Assert-VersionConsistency
 Write-Host ""
 
 Test-Tool 'java' 'Install JDK 17 and check PATH/JAVA_HOME.' -Required | Out-Null
@@ -635,10 +796,6 @@ Write-Host "  $AppDir"
 Write-Host "Release output directory:"
 Write-Host "  $ReleaseDir"
 
-if ($GenerateUpdateManifest) {
-    New-UpdateManifest
-}
-
 if ($BuildInstaller) {
     Invoke-JPackage
 }
@@ -653,6 +810,15 @@ if ($BuildPortable) {
 
 if ($BuildInnoInstaller) {
     Invoke-InnoSetup
+}
+
+if ($GenerateUpdateManifest) {
+    $appImageAppDir = Join-Path (Join-Path $AppImageDir $ProductName) 'app'
+    if (-not (Test-Path -LiteralPath $appImageAppDir)) {
+        Fail "-GenerateUpdateManifest needs the jpackage app image; add -BuildAppImage, -BuildPortable or -BuildInnoInstaller."
+    }
+    New-UpdateManifest -SourceAppDir $appImageAppDir
+    New-CdnPayload -SourceAppDir $appImageAppDir
 }
 
 if (-not ($BuildInstaller -or $BuildAppImage -or $BuildPortable -or $BuildInnoInstaller)) {
