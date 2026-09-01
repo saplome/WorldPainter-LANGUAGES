@@ -4605,6 +4605,11 @@ public final class App extends JFrame implements BrushControl,
         menuItem.setMnemonic('m');
         menu.add(menuItem);
 
+        menu.addSeparator();
+        menuItem = new JMenuItem(org.pepsoft.worldpainter.WPI18n.s("ui.treeGenerator.menu") + "...");
+        menuItem.addActionListener(e -> new TreeGeneratorDialog(App.this).setVisible(true));
+        menu.add(menuItem);
+
         menuItem = new JMenuItem(strings.getString("biomes.viewer") + "...");
         menuItem.setEnabled(false);
         if (Configuration.getInstance().isSafeMode()) {
