@@ -36,13 +36,23 @@ powershell -ExecutionPolicy Bypass -File .\tools\windows-packaging\build-windows
 
 ## Чистые релизные архивы
 
-`tools/release/pack-release-archives.ps1` собирает архивы для GitHub и отсекает лишнее: `target/`, `release/`, `.git/`, IDE-файлы, `*.class`, `*.jar`, `*.exe`, `*.zip`, логи и временные файлы.
+`tools/release/pack-release-archives.ps1` собирает архивы исходников и отсекает лишнее: `target/`, корневой `release/`, `.git/`, IDE-файлы, `*.class`, `*.jar`, `*.exe`, `*.zip`, логи и временные файлы. Каталог `tools/release` — это исходники, он в архивы попадает.
 
 ```powershell
 .\tools\release\pack-release-archives.ps1 -VerifyOnly
 .\tools\release\pack-release-archives.ps1
 ```
 
-Проверяется: нет выхлопа сборки, нет ссылок на генератор деревьев, версия совпадает в README, `installer.iss` и `build-windows-installer.ps1`, есть `docs/RELEASE_NOTES_<версия>.md`. При любой проблеме скрипт останавливается и ничего не собирает.
+Проверяется: нет выхлопа сборки, ни в одном файле не осталось абсолютного пути к домашнему каталогу сборочной машины, версия совпадает в `README.md`, `installer.iss` и `build-windows-installer.ps1`, есть `docs/RELEASE_NOTES_<версия>.md`. При любой проблеме скрипт останавливается и ничего не собирает.
 
-На выходе в `release/github/`: `...-github-ready.zip` (всё для коммита), `WorldPainter-Languages-2.27.0-L2.0.1.zip` (исходники без `tools/`), `...-release-tools.zip` (только `tools/`).
+На выходе в `release/github/`: `...-github-ready.zip` (всё), `WorldPainter-Languages-<версия>.zip` (исходники без `tools/`), `...-release-tools.zip` (только `tools/`).
+
+## Подготовка загрузки на GitHub
+
+`tools/release/prepare-github-upload.ps1` складывает в `release/upload/` всё, что уходит на GitHub: ассеты релиза (`release-assets/`), скрипты публикации (`publish-step1-cdn.sh`, `verify-cdn.sh`, `publish-step2-release.sh`) и инструкцию `UPLOAD_RU.md`.
+
+```powershell
+.\tools\release\prepare-github-upload.ps1
+```
+
+Перед сборкой набора скрипт сверяет манифест обновления с содержимым `release/cdn/app` — размер, SHA-256 и URL каждого файла — и останавливается, если что-то расходится. Запускать после каждой пересборки архивов. Порядок публикации и устройство канала обновлений: `docs/UPDATE_CHANNEL_RU.md`.
