@@ -33,6 +33,43 @@ public class Java261Level extends JavaLevel {
     }
 
     @Override
+    public int getSpawnX() {
+        return getSpawnPos(0);
+    }
+
+    @Override
+    public int getSpawnY() {
+        return getSpawnPos(1);
+    }
+
+    @Override
+    public int getSpawnZ() {
+        return getSpawnPos(2);
+    }
+
+    @Override
+    public void setSpawnX(int spawnX) {
+        setSpawnPos(0, spawnX);
+    }
+
+    @Override
+    public void setSpawnY(int spawnY) {
+        setSpawnPos(1, spawnY);
+    }
+
+    @Override
+    public void setSpawnZ(int spawnZ) {
+        setSpawnPos(2, spawnZ);
+    }
+
+    @Override
+    public void setSpawnDimension(String dimension) {
+        final Map<String, Tag> spawn = getOrCreateSpawn();
+        spawn.put(TAG_DIMENSION_, new StringTag(TAG_DIMENSION_, dimension));
+        setMap(TAG_SPAWN_, spawn);
+    }
+
+    @Override
     public void save(File worldDir) throws IOException {
         super.save(worldDir);
 
@@ -86,7 +123,7 @@ public class Java261Level extends JavaLevel {
         try (NBTInputStream in = new NBTInputStream(new GZIPInputStream(new FileInputStream(new File(worldDir, "data/minecraft/world_gen_settings.dat"))))) {
             compoundTag = (CompoundTag) in.readTag();
         }
-        final Map<String, Tag> worldGenSettings = ((CompoundTag) compoundTag.getTag("data")).getValue();
+        worldGenSettings = ((CompoundTag) compoundTag.getTag("data")).getValue();
         mapFeatures = ((ByteTag) worldGenSettings.get(TAG_GENERATE_STRUCTURES_)).getValue() == (byte) 1;
         seed = ((LongTag) worldGenSettings.get(TAG_SEED_)).getValue();
         final CompoundTag dimensionsTag = (CompoundTag) worldGenSettings.get(TAG_DIMENSIONS_);
@@ -139,8 +176,34 @@ public class Java261Level extends JavaLevel {
         }
     }
 
+    private int getSpawnPos(int index) {
+        final Map<String, Tag> spawn = getMap(TAG_SPAWN_);
+        if ((spawn == null) || (! spawn.containsKey(TAG_POS_))) {
+            return 0;
+        }
+        return ((IntArrayTag) spawn.get(TAG_POS_)).getValue()[index];
+    }
+
+    private void setSpawnPos(int index, int value) {
+        final Map<String, Tag> spawn = getOrCreateSpawn();
+        final int[] pos = spawn.containsKey(TAG_POS_) ? ((IntArrayTag) spawn.get(TAG_POS_)).getValue().clone() : new int[3];
+        pos[index] = value;
+        spawn.put(TAG_POS_, new IntArrayTag(TAG_POS_, pos));
+        setMap(TAG_SPAWN_, spawn);
+    }
+
+    private Map<String, Tag> getOrCreateSpawn() {
+        final Map<String, Tag> spawn = getMap(TAG_SPAWN_);
+        if (spawn != null) {
+            return spawn;
+        }
+        final Map<String, Tag> newSpawn = new HashMap<>();
+        newSpawn.put(TAG_YAW_, new IntTag(TAG_YAW_, 0));
+        newSpawn.put(TAG_PITCH_, new IntTag(TAG_PITCH_, 0));
+        return newSpawn;
+    }
+
     private CompoundTag getOrCreateWorldGenSettings() {
-        Map<String, Tag> worldGenSettings = getMap(TAG_WORLD_GEN_SETTINGS);
         if (worldGenSettings == null) {
             worldGenSettings = new HashMap<>();
             worldGenSettings.put(TAG_GENERATE_STRUCTURES_, new ByteTag(TAG_GENERATE_STRUCTURES_, mapFeatures ? (byte) 1 : (byte) 0));
@@ -270,6 +333,7 @@ public class Java261Level extends JavaLevel {
     private final Map<Integer, MapGenerator> generators = new HashMap<>();
     private long seed;
     private boolean mapFeatures;
+    private Map<String, Tag> worldGenSettings;
 
     private static final Logger logger = LoggerFactory.getLogger(Java261Level.class);
 }

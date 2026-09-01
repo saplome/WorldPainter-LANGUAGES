@@ -765,6 +765,10 @@ public final class Constants {
     public static final String TAG_SPAWN_DIMENSION         = "SpawnDimension";
     public static final String TAG_FACING                  = "Facing";
     public static final String TAG_FACING_                 = "facing";
+    public static final String TAG_SPAWN_                  = "spawn";
+    public static final String TAG_DIMENSION_              = "dimension";
+    public static final String TAG_YAW_                    = "yaw";
+    public static final String TAG_PITCH_                  = "pitch";
 
     /**
      * Possibly unofficial, SpoutCraft-specific

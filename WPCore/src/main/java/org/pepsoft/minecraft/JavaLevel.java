@@ -282,6 +282,10 @@ public abstract class JavaLevel extends AbstractNBTItem {
         setInt(TAG_SPAWN_Z, spawnZ);
     }
 
+    public void setSpawnDimension(String dimension) {
+        setString(TAG_SPAWN_DIMENSION, dimension);
+    }
+
     public void setTime(long time) {
         setLong(TAG_TIME, time);
     }
@@ -349,20 +353,29 @@ public abstract class JavaLevel extends AbstractNBTItem {
     /**
      * Set the multiplayer and single player spawn point and the single player location.
      */
-    public void setSpawn(int x, int y, int z) {
+    public void setSpawn(int dim, int x, int y, int z) {
         setSpawnX(x);
         setSpawnY(y);
         setSpawnZ(z);
-        Map<String, Tag> playerSettings = getMap(TAG_PLAYER);
-        if (playerSettings == null) {
-            playerSettings = new HashMap<>();
+        setSpawnDimension(switch (dim) {
+            case DIM_NORMAL -> MC_OVERWORLD;
+            case DIM_NETHER -> MC_THE_NETHER;
+            case DIM_END -> MC_THE_END;
+            default -> throw new IllegalArgumentException("Don't know how to set spawn for dimension " + dim);
+        });
+        if ((platform.getAttribute(ATTRIBUTE_MC_VERSION).compareTo(V_26_1) < 0) && (dim == DIM_NORMAL)) {
+            // TODO: also make this work for other dimensions
+            Map<String, Tag> playerSettings = getMap(TAG_PLAYER);
+            if (playerSettings == null) {
+                playerSettings = new HashMap<>();
+            }
+            playerSettings.put(TAG_SPAWN_X, new IntTag(TAG_SPAWN_X, x));
+            playerSettings.put(TAG_SPAWN_Y, new IntTag(TAG_SPAWN_Y, y));
+            playerSettings.put(TAG_SPAWN_Z, new IntTag(TAG_SPAWN_Z, z));
+            playerSettings.put(TAG_SPAWN_FORCED, new ByteTag(TAG_SPAWN_FORCED, (byte) 1));
+            playerSettings.put(TAG_POS, new ListTag<>(TAG_POS, DoubleTag.class, asList(new DoubleTag("", x + 0.5), new DoubleTag("", y), new DoubleTag("", z + 0.5))));
+            setMap(TAG_PLAYER, playerSettings);
         }
-        playerSettings.put(TAG_SPAWN_X, new IntTag(TAG_SPAWN_X, x));
-        playerSettings.put(TAG_SPAWN_Y, new IntTag(TAG_SPAWN_Y, y));
-        playerSettings.put(TAG_SPAWN_Z, new IntTag(TAG_SPAWN_Z, z));
-        playerSettings.put(TAG_SPAWN_FORCED, new ByteTag(TAG_SPAWN_FORCED, (byte) 1));
-        playerSettings.put(TAG_POS, new ListTag<>(TAG_POS, DoubleTag.class, asList(new DoubleTag("", x + 0.5), new DoubleTag("", y), new DoubleTag("", z + 0.5))));
-        setMap(TAG_PLAYER, playerSettings);
     }
 
     public Platform getPlatform() {

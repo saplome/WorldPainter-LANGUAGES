@@ -307,6 +307,7 @@ public class JavaWorldMerger extends JavaWorldExporter { // TODO can this be mad
                     level.setSpawnY(Math.max(getIntHeightAt(DIM_NORMAL, spawnPoint.x, spawnPoint.y), getWaterLevelAt(DIM_NORMAL, spawnPoint.x, spawnPoint.y)) + 1);
                 }
                 level.setSpawnZ(spawnPoint.y);
+                level.setSpawnDimension(MC_OVERWORLD);
             }
 
             // TODO: copy EVERYTHING and then operate solely on the copied map? No need to copy things from the backup

@@ -2318,7 +2318,7 @@ public final class App extends JFrame implements BrushControl,
     }
     
     /**
-     * Saves a separate copy which can be opened by the unmodified WorldPainter 2.27.0. The current world, its normal
+     * Saves a separate copy which can be opened by the unmodified WorldPainter 2.27.x. The current world, its normal
      * save location and its dirty state are deliberately left untouched.
      */
     private boolean saveForOriginal() {

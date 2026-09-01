@@ -1,3 +1,7 @@
+-- Version 2.27.1, released 30-8-2027
+
+ * Bug fix: make setting the spawn point work once again for Minecraft 26.1 and later
+
 -- Version 2.27.0, released 27-6-2026
 
  * Added support for Exporting, Importing and Merging with maps from Minecraft 26.1 and later

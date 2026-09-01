@@ -61,21 +61,20 @@ public final class JavaPlatformProvider extends AbstractPlatformProvider impleme
     }
 
     public File getDimensionDir(Platform platform, File worldDir, int dim) {
-        final int indexInDefaultOrder = DEFAULT_JAVA_PLATFORMS.indexOf(platform);
-        if (indexInDefaultOrder <= 7) {
-            // Minecraft 1.21.11 or earlier, or unknown platform
-            return switch (dim) {
-                case DIM_NORMAL -> worldDir;
-                case DIM_NETHER -> new File(worldDir, "DIM-1");
-                case DIM_END -> new File(worldDir, "DIM1");
-                default -> throw new IllegalArgumentException("Dimension " + dim + " not supported");
-            };
-        } else {
+        if (platform.getAttribute(ATTRIBUTE_MC_VERSION).isAtLeast(V_26_1)) {
             // Minecraft 26.1 or later
             return switch (dim) {
                 case DIM_NORMAL -> new File(worldDir, "dimensions/minecraft/overworld");
                 case DIM_NETHER -> new File(worldDir, "dimensions/minecraft/the_nether");
                 case DIM_END -> new File(worldDir, "dimensions/minecraft/the_end");
+                default -> throw new IllegalArgumentException("Dimension " + dim + " not supported");
+            };
+        } else {
+            // Minecraft 1.21.11 or earlier, or unknown platform
+            return switch (dim) {
+                case DIM_NORMAL -> worldDir;
+                case DIM_NETHER -> new File(worldDir, "DIM-1");
+                case DIM_END -> new File(worldDir, "DIM1");
                 default -> throw new IllegalArgumentException("Dimension " + dim + " not supported");
             };
         }
