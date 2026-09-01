@@ -54,9 +54,10 @@ function New-LocalManifest {
     )
 
     $baseUrl = $BaseUrl.TrimEnd('/')
-    $excludedNames = @('wp-updater.jar', 'updater.properties')
+    # Nothing is excluded: a release manifest covers the whole app directory, including the updater jar itself, and the
+    # updater is expected to skip the jar it is running from.
     $rootFull = [System.IO.Path]::GetFullPath($Root)
-    $files = @(Get-ChildItem -LiteralPath $rootFull -Recurse -File | Where-Object { $excludedNames -notcontains $_.Name } | Sort-Object FullName)
+    $files = @(Get-ChildItem -LiteralPath $rootFull -Recurse -File | Sort-Object FullName)
     if (@($files).Count -eq 0) {
         throw "No files found under $rootFull for the manifest."
     }
@@ -166,7 +167,7 @@ function Invoke-Updater {
         [string[]]$Arguments
     )
 
-    Write-Host "  > java -jar wp-updater.jar $($Arguments -join ' ')" -ForegroundColor DarkGray
+    Write-Host "  > java -jar $(Split-Path -Leaf $script:UpdaterJar) $($Arguments -join ' ')" -ForegroundColor DarkGray
     $stdout = Join-Path $script:LogDir ("$Title.out.txt")
     $stderr = Join-Path $script:LogDir ("$Title.err.txt")
     $allArguments = @('-jar', $script:UpdaterJar) + $Arguments
@@ -207,10 +208,11 @@ if (-not (Test-Path -LiteralPath $sourceAppDir -PathType Container)) {
     throw 'Nothing to test.'
 }
 
-$sourceUpdaterJar = Join-Path $sourceAppDir 'wp-updater.jar'
-if (-not (Test-Path -LiteralPath $sourceUpdaterJar -PathType Leaf)) {
-    throw "wp-updater.jar not found in $sourceAppDir. Rebuild with the updated build-windows-installer.ps1."
+$sourceUpdaterJars = @(Get-ChildItem -LiteralPath $sourceAppDir -Filter 'wp-updater*.jar' -File)
+if ($sourceUpdaterJars.Count -ne 1) {
+    throw "Expected exactly one wp-updater*.jar in $sourceAppDir, found $($sourceUpdaterJars.Count). Rebuild with the current build-windows-installer.ps1."
 }
+$updaterJarName = $sourceUpdaterJars[0].Name
 
 if (-not (Get-Command 'java' -ErrorAction SilentlyContinue)) {
     throw 'java was not found on PATH. Install/point PATH at JDK 17.'
@@ -238,9 +240,7 @@ Write-Host "  project root : $ProjectRoot"
 Write-Host "  work dir     : $WorkDir"
 Copy-Item -LiteralPath $sourceAppDir -Destination $cdnAppDir -Recurse -Force
 Copy-Item -LiteralPath $sourceAppDir -Destination $installDir -Recurse -Force
-Remove-Item -LiteralPath (Join-Path $cdnAppDir 'wp-updater.jar') -Force -ErrorAction SilentlyContinue
-Remove-Item -LiteralPath (Join-Path $cdnAppDir 'updater.properties') -Force -ErrorAction SilentlyContinue
-$script:UpdaterJar = Join-Path $installDir 'wp-updater.jar'
+$script:UpdaterJar = Join-Path $installDir $updaterJarName
 $installedFileCount = @(Get-ChildItem -LiteralPath $installDir -Recurse -File).Length
 Write-Host "  installed copy: $installedFileCount file(s)"
 
@@ -257,7 +257,7 @@ try {
     Assert-Condition ($t1.Output -match 'up to date') 'reports that everything is up to date'
 
     Write-Step 'T2  publishing a fake new version'
-    $changedFile = @(Get-ChildItem -LiteralPath $cdnAppDir -Recurse -File -Filter '*.jar' | Sort-Object Length) | Select-Object -First 1
+    $changedFile = @(Get-ChildItem -LiteralPath $cdnAppDir -Recurse -File -Filter '*.jar' | Where-Object { $_.Name -notlike 'wp-updater*' } | Sort-Object Length) | Select-Object -First 1
     if (-not $changedFile) {
         $changedFile = @(Get-ChildItem -LiteralPath $cdnAppDir -Recurse -File | Sort-Object Length) | Select-Object -First 1
     }
@@ -321,6 +321,23 @@ try {
     Write-Step 'T6  manifest URL that does not exist (expect exit 2)'
     $t6 = Invoke-Updater -Title 't6-missing-manifest' -Arguments @('--manifest', "http://localhost:$Port/no-such-manifest.txt", '--root', $installDir, '--check-only', '--no-launch')
     Assert-Condition ($t6.ExitCode -eq 2) "exit code 2 (actual: $($t6.ExitCode))"
+
+    Write-Step 'T7  the updater does not try to overwrite its own jar (expect exit 0, jar untouched)'
+    # T5 left the served bytes and the manifest out of sync on purpose. Republish the current CDN state and converge,
+    # so that afterwards the updater jar is the only difference.
+    New-LocalManifest -Root $cdnAppDir -BaseUrl $baseUrl -Version '2.27.1-L2.1.0-test7a' -Output $manifestPath
+    $t7restore = Invoke-Updater -Title 't7-restore' -Arguments @('--manifest', $manifestUrl, '--root', $installDir, '--no-launch')
+    Assert-Condition ($t7restore.ExitCode -eq 0) "converged on the republished manifest (actual: $($t7restore.ExitCode))"
+
+    $cdnUpdaterJar = Join-Path $cdnAppDir $updaterJarName
+    $installedUpdaterJar = Join-Path $installDir $updaterJarName
+    Add-Content -LiteralPath $cdnUpdaterJar -Value 'pretend-this-is-a-newer-updater' -Encoding Ascii
+    New-LocalManifest -Root $cdnAppDir -BaseUrl $baseUrl -Version '2.27.1-L2.1.0-test7b' -Output $manifestPath
+    $updaterHashBefore = Get-Sha256 -Path $installedUpdaterJar
+
+    $t7 = Invoke-Updater -Title 't7-self-jar' -Arguments @('--manifest', $manifestUrl, '--root', $installDir, '--no-launch')
+    Assert-Condition ($t7.ExitCode -eq 0) "exit code 0 despite the manifest listing a different updater jar (actual: $($t7.ExitCode))"
+    Assert-Condition ((Get-Sha256 -Path $installedUpdaterJar) -eq $updaterHashBefore) 'the running updater jar was left alone'
 } finally {
     Stop-LocalServer
 }

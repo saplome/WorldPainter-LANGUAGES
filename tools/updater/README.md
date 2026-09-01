@@ -40,3 +40,17 @@ CLI: `--manifest <url>`, `--root <dir>`, `--launch <path>`, `--check-only`, `--n
 - Файлы приложения: отдельный публичный git-репозиторий-CDN (например `saplome/WorldPainter-LANGUAGES-cdn`), раздача через `https://raw.githubusercontent.com/<owner>/<repo>/main/app/...` — поддерживает подкаталоги (`lib/...`), лимит 100 МБ на файл.
 - Манифест: ассетом GitHub Release по стабильному URL `https://github.com/saplome/WorldPainter-LANGUAGES/releases/latest/download/update-manifest.txt` (значение по умолчанию `-UpdateManifestUrl`) либо тоже в CDN-репозитории.
 - ВАЖНО: ассеты GitHub Release плоские (без подкаталогов), поэтому сами файлы приложения в ассеты релиза класть нельзя — только манифест.
+
+## Локальная проверка (без публикации)
+
+`test-updater-local.ps1` прогоняет апдейтер целиком на локальном HTTP-сервере, не трогая реальную установку:
+
+```powershell
+cd C:\Users\<user>\Downloads\WorldPainter-LANGUAGES-main
+.\tools\windows-packaging\build-windows-installer.ps1 -BuildPortable
+.\tools\updater\test-updater-local.ps1
+```
+
+Скрипт копирует `release\staging\app` во временный каталог (`%TEMP%\wp-updater-local-test`) как «CDN» и как «установку», поднимает `http://localhost:8000/`, генерирует манифест и проверяет: актуальное состояние (exit 0), обнаружение обновлений (exit 1), докачку только изменённых файлов + новый файл + `delete=`, отсутствие `*.wpupdate-tmp`, повторный запуск как no-op, отказ при испорченной загрузке (exit 2, локальные файлы целы) и отсутствующий манифест (exit 2).
+
+Параметры: `-ProjectRoot <путь>`, `-Port <порт>`, `-WorkDir <путь>`, `-KeepWorkDir`. Требуется JDK 17 (`java` в PATH). Если порт не поднимается без прав администратора: `netsh http add urlacl url=http://localhost:8000/ user=%USERNAME%` либо `-Port` другой.
