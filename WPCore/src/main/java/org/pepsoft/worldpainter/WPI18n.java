@@ -152,10 +152,43 @@ public final class WPI18n {
         if (english.indexOf('{') < 0) {
             return localized;
         }
-        if (isPatternSafe(localized) && argIndices(localized).equals(argIndices(english))) {
-            return localized;
+        final String repaired = repairQuotes(localized);
+        if (isPatternSafe(repaired) && argIndices(repaired).equals(argIndices(english))) {
+            return repaired;
         }
         return english;
+    }
+
+    /**
+     * MessageFormat reads a lone apostrophe as the start of a quoted section, so
+     * "Imposta l'intensita a {0}%" renders as "Imposta lintensita a {0}%": the
+     * apostrophe is swallowed and the argument is never substituted. Translators
+     * write apostrophes naturally, so double them here instead of losing the
+     * whole translation to the English fallback. A run of two is already
+     * correct and is left alone.
+     * <p>Only reached for keys whose English base is a pattern, and no bundle
+     * uses quotes to escape literal braces, so every lone quote is an
+     * apostrophe.
+     */
+    private static String repairQuotes(String pattern) {
+        if (pattern.indexOf('\'') < 0) {
+            return pattern;
+        }
+        final StringBuilder sb = new StringBuilder(pattern.length() + 8);
+        for (int i = 0; i < pattern.length(); i++) {
+            final char c = pattern.charAt(i);
+            if (c != '\'') {
+                sb.append(c);
+                continue;
+            }
+            int run = 1;
+            while ((i + run) < pattern.length() && (pattern.charAt(i + run) == '\'')) {
+                run++;
+            }
+            sb.append((run == 1) ? "''" : pattern.substring(i, i + run));
+            i += run - 1;
+        }
+        return sb.toString();
     }
 
     private static boolean isPatternSafe(String pattern) {
