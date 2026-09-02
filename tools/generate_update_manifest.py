@@ -1,4 +1,10 @@
 #!/usr/bin/env python3
+"""Generate an update-manifest.txt for the WorldPainter Languages updater.
+
+Cross-platform equivalent of the -GenerateUpdateManifest switch of
+tools/windows-packaging/build-windows-installer.ps1: it walks a staged application directory and
+writes one file= line per file, with the SHA-256, the size, the relative path and the download URL.
+"""
 
 import argparse
 import fnmatch
@@ -7,7 +13,10 @@ import sys
 import urllib.parse
 from pathlib import Path
 
-DEFAULT_EXCLUDES = ["*.wpupdate-tmp", "updater.properties", "wp-updater.jar"]
+# A release manifest covers the whole application directory, including updater.properties and the updater jar itself:
+# a client that never gets those keeps the old manifest URL and the old updater forever. The updater skips the jar it
+# is running from. Only the leftovers of an interrupted update are excluded, because they are not part of any release.
+DEFAULT_EXCLUDES = ["*.wpupdate-tmp"]
 
 def sha256_of(path: Path) -> str:
     digest = hashlib.sha256()
