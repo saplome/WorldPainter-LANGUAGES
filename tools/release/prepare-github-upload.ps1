@@ -418,6 +418,7 @@ Write-BashScript -Path (Join-Path $uploadDir 'publish-step2-release.sh') -Lines 
     "TITLE=$(Format-BashSingleQuoted "WorldPainter Languages $productVersion")"
     "NOTES=$(Format-BashSingleQuoted (ConvertTo-BashPath $notesPath))"
     "PROBE=$(Format-BashSingleQuoted "$updateBaseUrl/updater.properties")"
+    "SRC=$(Format-BashSingleQuoted (ConvertTo-BashPath $ProjectRoot))"
     ''
     '# releases/latest/download switches over the moment this command returns, so a release whose'
     '# manifest points at files that are not on the CDN yet would break every update it reaches.'
@@ -428,9 +429,25 @@ Write-BashScript -Path (Join-Path $uploadDir 'publish-step2-release.sh') -Lines 
     '    exit 1'
     'fi'
     ''
+    '# Without --target the tag is cut from whatever the default branch currently points at, so a'
+    '# release published before the sources are pushed ships "Source code" archives of older code. The'
+    '# manifest and the binaries would still be correct, which is what makes it easy to miss - so the'
+    '# commit that produced this build has to be on GitHub before the tag exists.'
+    'head=$(git -C "$SRC" rev-parse HEAD)'
+    'remote=$(git -C "$SRC" ls-remote "https://github.com/$REPO.git" HEAD | cut -f1)'
+    'if [ "$head" != "$remote" ]; then'
+    '    echo "The sources of this build are not the ones on GitHub."'
+    '    echo "  local HEAD:  $head"'
+    '    echo "  remote HEAD: ${remote:-<the repository has no commits>}"'
+    '    echo "Push them first, so that $TAG points at the code it ships:"'
+    '    echo "  git -C \"$SRC\" push origin HEAD"'
+    '    exit 1'
+    'fi'
+    ''
     '# Add --draft below to keep releases/latest on the previous release until you publish by hand.'
     'gh release create "$TAG" \'
     '    --repo "$REPO" \'
+    '    --target "$head" \'
     '    --title "$TITLE" \'
     '    --notes-file "$NOTES" \'
 ) + $assetLines + @(
@@ -464,6 +481,7 @@ foreach ($token in @(
     @{ Name = '@@BASE_URL@@';    Value = $updateBaseUrl },
     @{ Name = '@@UPLOAD_DIR@@';  Value = (ConvertTo-BashPath $uploadDir) },
     @{ Name = '@@CDN_DIR@@';     Value = (ConvertTo-BashPath $cdnDir) },
+    @{ Name = '@@SRC_DIR@@';     Value = (ConvertTo-BashPath $ProjectRoot) },
     @{ Name = '@@FILE_COUNT@@';  Value = [string]$cdnFileCount },
     @{ Name = '@@PAYLOAD_MB@@';  Value = [string]$cdnSizeMb },
     @{ Name = '@@NOTES_FILE@@';  Value = "docs/RELEASE_NOTES_$productVersion.md" },
