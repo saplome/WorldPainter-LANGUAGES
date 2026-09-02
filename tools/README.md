@@ -28,9 +28,11 @@ powershell -ExecutionPolicy Bypass -File .\tools\windows-packaging\build-windows
 
 ## Инкрементальные обновления
 
-- в staging автоматически добавляется `app/wp-updater.jar`, а в app-image — launcher `WorldPainter-Update.exe` (требуется `javac` в PATH);
+- в staging автоматически добавляется `app/wp-updater-<версия>.jar`, а в app-image — launcher `WorldPainter-Update.exe` (требуется `javac` в PATH);
 - `-GenerateUpdateManifest -UpdateBaseUrl <база>` — сгенерировать `release/update-manifest.txt` для апдейтера (добавляется к draft-ассетам);
 - `-UpdateManifestUrl <url>` — URL манифеста, зашиваемый в `app/updater.properties`.
+
+Прогнать весь канал обновлений локально, без публикации: `.\tools\updater\test-updater-local.ps1` (поднимает HTTP-сервер на localhost и проверяет семь сценариев).
 
 Подробности: `tools/updater/README.md`.
 
