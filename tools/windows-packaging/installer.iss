@@ -6,7 +6,7 @@
 ;   powershell -ExecutionPolicy Bypass -File .\tools\windows-packaging\build-windows-installer.ps1 -BuildInnoInstaller
 
 #define MyAppName "WorldPainter Languages"
-#define MyAppVersion "2.27.1-L2.1.0"
+#define MyAppVersion "3.0.0"
 #define MyAppPublisher "WorldPainter Languages"
 #define MyAppURL "https://github.com/saplome/WorldPainter-LANGUAGES"
 #define MyAppExeName "WorldPainter Languages.exe"
@@ -31,6 +31,10 @@ SetupIconFile=..\..\assets\icon.ico
 UninstallDisplayIcon={app}\{#MyAppExeName}
 Compression=lzma2
 SolidCompression=yes
+; Setup.exe leaves FileVersion blank unless this is set explicitly, and Windows reads it in the Details tab and in
+; SmartScreen heuristics. It only accepts plain numbers, which is why it could not be set while versions looked
+; like 2.27.1-L2.1.0.
+VersionInfoVersion={#MyAppVersion}
 WizardStyle=modern
 WizardImageFile=inno\wizard-side.bmp
 WizardSmallImageFile=inno\wizard-small.bmp

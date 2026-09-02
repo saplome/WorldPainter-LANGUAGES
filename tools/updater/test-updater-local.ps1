@@ -245,7 +245,7 @@ $installedFileCount = @(Get-ChildItem -LiteralPath $installDir -Recurse -File).L
 Write-Host "  installed copy: $installedFileCount file(s)"
 
 try {
-    New-LocalManifest -Root $cdnAppDir -BaseUrl $baseUrl -Version '2.27.0-L2.0.0-test1' -Output $manifestPath
+    New-LocalManifest -Root $cdnAppDir -BaseUrl $baseUrl -Version '3.0.0-test1' -Output $manifestPath
 
     Write-Step "Starting local HTTP server on http://localhost:$Port/"
     $script:ServerJob = Start-LocalServer -Root $cdnDir -Port $Port
@@ -268,7 +268,7 @@ try {
     $obsoleteLocalFile = Join-Path $installDir 'updater-test-obsolete.txt'
     [System.IO.File]::WriteAllText($obsoleteLocalFile, "must be deleted by the updater`n", (New-Object System.Text.UTF8Encoding($false)))
 
-    New-LocalManifest -Root $cdnAppDir -BaseUrl $baseUrl -Version '2.27.0-L2.0.0-test2' -Output $manifestPath -Delete @('updater-test-obsolete.txt')
+    New-LocalManifest -Root $cdnAppDir -BaseUrl $baseUrl -Version '3.0.0-test2' -Output $manifestPath -Delete @('updater-test-obsolete.txt')
     Write-Host "  changed remote file: $changedRelative"
 
     $expectedHash = Get-Sha256 -Path $changedFile.FullName
@@ -325,14 +325,14 @@ try {
     Write-Step 'T7  the updater does not try to overwrite its own jar (expect exit 0, jar untouched)'
     # T5 left the served bytes and the manifest out of sync on purpose. Republish the current CDN state and converge,
     # so that afterwards the updater jar is the only difference.
-    New-LocalManifest -Root $cdnAppDir -BaseUrl $baseUrl -Version '2.27.1-L2.1.0-test7a' -Output $manifestPath
+    New-LocalManifest -Root $cdnAppDir -BaseUrl $baseUrl -Version '3.0.0-test7a' -Output $manifestPath
     $t7restore = Invoke-Updater -Title 't7-restore' -Arguments @('--manifest', $manifestUrl, '--root', $installDir, '--no-launch')
     Assert-Condition ($t7restore.ExitCode -eq 0) "converged on the republished manifest (actual: $($t7restore.ExitCode))"
 
     $cdnUpdaterJar = Join-Path $cdnAppDir $updaterJarName
     $installedUpdaterJar = Join-Path $installDir $updaterJarName
     Add-Content -LiteralPath $cdnUpdaterJar -Value 'pretend-this-is-a-newer-updater' -Encoding Ascii
-    New-LocalManifest -Root $cdnAppDir -BaseUrl $baseUrl -Version '2.27.1-L2.1.0-test7b' -Output $manifestPath
+    New-LocalManifest -Root $cdnAppDir -BaseUrl $baseUrl -Version '3.0.0-test7b' -Output $manifestPath
     $updaterHashBefore = Get-Sha256 -Path $installedUpdaterJar
 
     $t7 = Invoke-Updater -Title 't7-self-jar' -Arguments @('--manifest', $manifestUrl, '--root', $installDir, '--no-launch')

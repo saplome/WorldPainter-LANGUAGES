@@ -1440,7 +1440,7 @@ public final class Configuration implements Serializable, EventLogger, Minecraft
     private int colourschemeIndex;
     private int launchCount;
     // L66: release tag the user selected "do not remind" for. Any other newer release is announced again. Configurations
-    // written before L2.1.0 carry an int revision under a different name, which deserialisation simply drops.
+    // written before 3.0.0 carry an int revision under a different name, which deserialisation simply drops.
     private String dismissedForkUpdateTag;
     private Map<Integer, File> minecraftJars = new HashMap<>();
     private DonationStatus donationStatus;

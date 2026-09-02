@@ -3,7 +3,7 @@
 [CmdletBinding()]
 param(
     [string]$ProjectRoot = '',
-    [string]$Version = '2.27.1-L2.1.0',
+    [string]$Version = '3.0.0',
     [string]$OutputDir = '',
     [switch]$VerifyOnly
 )
@@ -27,7 +27,7 @@ $ExcludedRootDirNames = @('release')
 $ExcludedExtensions = @('.class', '.jar', '.exe', '.msi', '.zip', '.7z', '.rar', '.log', '.tmp', '.bak', '.orig', '.rej', '.swp', '.swo', '.pyc', '.iml')
 $ExcludedFileNames = @('.DS_Store', 'Thumbs.db', 'dependency-reduced-pom.xml', '.flattened-pom.xml')
 # Strings that must never reach a published source archive. The tree generator used to be listed here while it was
-# unreleased work in progress; since 2.27.1-L2.1.0 it ships as a [BETA] feature, so the only thing left to guard against
+# unreleased work in progress; since 3.0.0 it ships as a [BETA] feature, so the only thing left to guard against
 # is a leak of the build machine itself: an absolute home directory hard-coded in a script, project file or resource.
 # Keep the patterns ASCII: PowerShell 5.1 reads a BOM-less .ps1 as ANSI, which would mangle anything else.
 $ForbiddenPatterns = @('C:\Users\', 'c:/users/')

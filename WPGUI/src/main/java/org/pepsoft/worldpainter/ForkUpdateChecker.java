@@ -195,7 +195,7 @@ public final class ForkUpdateChecker {
 
         /** The tag as a plain version number, so that the dialog shows both sides in the same shape. */
         String displayVersion() {
-            return tag.startsWith("v") ? tag.substring(1) : tag;
+            return version.toString();
         }
 
         final ProductVersion version;
@@ -203,17 +203,21 @@ public final class ForkUpdateChecker {
     }
 
     /**
-     * A release version in the fork's own scheme: the WorldPainter base version, then the fork revision, as in
-     * {@code 2.27.1-L2.1.0}. Both halves count, base first, so a release that only moves the base forward
-     * ({@code 2.28.0-L2.1.0}) is recognised as new just like one that only bumps the fork revision.
+     * A release version as a plain sequence of numbers, as in {@code 3.0.0}. The release tag adds the letter
+     * {@code L} in front ({@code L3.0.0}) for one reason only: builds up to 2.27.0-L2.0.1 looked for {@code L}
+     * followed by a number and ignored everything else, so without that letter they would never see a new release.
+     * The number continues the line those builds already used (L1, L2.0.0, L2.0.1, then 3.0.0), which is why a tag
+     * in the old {@code <base>-L<fork>} shape is read as its fork part alone.
      */
     private static final class ProductVersion {
-        private ProductVersion(int[] base, int[] fork) {
-            this.base = base;
-            this.fork = fork;
+        private ProductVersion(int[] numbers) {
+            this.numbers = numbers;
         }
 
-        /** Parses a release tag or version number, with or without the leading {@code v}; {@code null} if it is neither. */
+        /**
+         * Parses a release tag or a version number: an optional {@code v}, an optional legacy base version, an
+         * optional {@code L}, then the version itself. Returns {@code null} if the string is not a version at all.
+         */
         static ProductVersion parse(String version) {
             if (version == null) {
                 return null;
@@ -223,17 +227,14 @@ public final class ForkUpdateChecker {
                 return null;
             }
             try {
-                // A tag without a base version ("L2.1.1") says nothing about the base, so only the fork part decides.
-                final String base = (matcher.group(1) != null) ? matcher.group(1) : baseVersion();
-                return new ProductVersion(numbers(base), numbers(matcher.group(2)));
+                return new ProductVersion(numbers(matcher.group(1)));
             } catch (NumberFormatException e) {
                 return null;
             }
         }
 
         boolean isNewerThan(ProductVersion other) {
-            final int baseOrder = compare(base, other.base);
-            return (baseOrder != 0) ? (baseOrder > 0) : (compare(fork, other.fork) > 0);
+            return compare(numbers, other.numbers) > 0;
         }
 
         private static int[] numbers(String version) {
@@ -257,7 +258,20 @@ public final class ForkUpdateChecker {
             return 0;
         }
 
-        private final int[] base, fork;
+        /** Renders the version the way users see it: numbers only, without the {@code L} of the release tag. */
+        @Override
+        public String toString() {
+            final StringBuilder text = new StringBuilder();
+            for (int number: numbers) {
+                if (text.length() > 0) {
+                    text.append('.');
+                }
+                text.append(number);
+            }
+            return text.toString();
+        }
+
+        private final int[] numbers;
     }
 
     /** The WorldPainter version this build is based on, without a {@code -SNAPSHOT} or similar suffix. */
@@ -267,14 +281,14 @@ public final class ForkUpdateChecker {
     }
 
     private static final Pattern PRODUCT_VERSION_PATTERN
-            = Pattern.compile("v?(?:(\\d+(?:\\.\\d+)*)-)?L(\\d+(?:\\.\\d+)*)", Pattern.CASE_INSENSITIVE);
+            = Pattern.compile("v?(?:\\d+(?:\\.\\d+)*-)?L?(\\d+(?:\\.\\d+)*)", Pattern.CASE_INSENSITIVE);
     private static final Pattern BASE_VERSION_PATTERN = Pattern.compile("(\\d+(?:\\.\\d+)*)");
     private static final String UPDATER_EXECUTABLE = "WorldPainter-Update.exe";
     private static final String LATEST_RELEASE_API = "https://api.github.com/repos/saplome/WorldPainter-LANGUAGES/releases/latest";
     private static final Logger logger = LoggerFactory.getLogger(ForkUpdateChecker.class);
-    /** Fork revision of this build; the base version comes from {@link Version#VERSION} and cannot fall out of sync. */
-    public static final String CURRENT_FORK_VERSION = "2.1.0";
-    /** Installed version in the shape of a release tag without the leading {@code v}: {@code 2.27.1-L2.1.0}. */
-    public static final String CURRENT_PRODUCT_VERSION = baseVersion() + "-L" + CURRENT_FORK_VERSION;
+    /** Version of this build, exactly as users see it and as the release tag spells it after the {@code L}. */
+    public static final String CURRENT_PRODUCT_VERSION = "3.0.0";
+    /** The WorldPainter release this build is based on. Read from the code, so it cannot fall out of sync. */
+    public static final String BASE_VERSION = baseVersion();
     private static final ProductVersion INSTALLED_VERSION = ProductVersion.parse(CURRENT_PRODUCT_VERSION);
 }

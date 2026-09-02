@@ -162,7 +162,10 @@ public class AboutDialog extends javax.swing.JDialog implements WindowListener {
         final String style = String.format("body {font-family: %s; font-size: %dpt; color: #%06x; background-color: #%06x;} a {color: #%06x;}",
                 defaultTextPaneFont.getFamily(), defaultTextPaneFont.getSize(), textColour.getRGB() & 0xffffff,
                 jTextPane2.getBackground().getRGB() & 0xffffff, linkColour.getRGB() & 0xffffff);
-        return "<html><head><style>" + style + "</style></head><body>" + WPI18n.s("ui.about.languages.body") + "</body></html>";
+        // The version is substituted rather than written into all eleven bundles, where it used to go stale silently.
+        final String body = WPI18n.format("ui.about.languages.body",
+                ForkUpdateChecker.CURRENT_PRODUCT_VERSION, ForkUpdateChecker.BASE_VERSION);
+        return "<html><head><style>" + style + "</style></head><body>" + body + "</body></html>";
     }
 
     private String loadChangelog() {

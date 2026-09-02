@@ -9,8 +9,8 @@ param(
     [switch]$BuildInnoInstaller,
     [switch]$CreateDraftRelease,
     [switch]$OpenDraftRelease,
-    [string]$ReleaseTag = 'v2.27.1-L2.1.0',
-    [string]$ReleaseTitle = 'WorldPainter Languages 2.27.1-L2.1.0',
+    [string]$ReleaseTag = 'L3.0.0',
+    [string]$ReleaseTitle = 'WorldPainter Languages 3.0.0',
     [string]$ReleaseNotesFile = '',
     [string[]]$AdditionalDraftAsset = @(),
     [switch]$GenerateUpdateManifest,
@@ -26,11 +26,12 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 $ProductName = 'WorldPainter Languages'
-$ProductVersion = '2.27.1-L2.1.0'
-# Numeric Windows file/product version derived from both halves of $ProductVersion:
-#   <base major>.<base minor>.<base patch * 1000 + fork major * 100 + fork minor * 10 + fork patch>
-# 2.27.0-L2.0.1 -> 2.27.201, 2.27.1-L2.1.0 -> 2.27.1210. Keep it monotonic across releases.
-$WindowsInstallerVersion = '2.27.1210'
+$ProductVersion = '3.0.0'
+# Windows wants file/product versions as plain numbers, so this is simply $ProductVersion with a fourth component.
+# The release tag is 'L' + $ProductVersion: builds up to 2.27.0-L2.0.1 only ever looked for L followed by a number,
+# and without that letter they would never report a new release. The number itself continues the same line those
+# builds used - L1, L2.0.0, L2.0.1, then 3.0.0 - so they compare it correctly. Keep it monotonic across releases.
+$WindowsInstallerVersion = '3.0.0.0'
 $WindowsUpgradeUuid = 'd5984a7f-cb32-48c8-b6f1-97a3c4c0da44'
 $ProductVendor = 'WorldPainter Languages'
 $ProductDescription = 'WorldPainter Languages'
@@ -52,7 +53,7 @@ $InstallerWorkDir = Join-Path $ReleaseDir 'installer-work'
 $AppImageDir = Join-Path $ReleaseDir 'app-image'
 $PortableZipPath = Join-Path $ReleaseDir "WorldPainter-Languages-$ProductVersion-Portable.zip"
 $GitHubRepository = 'saplome/WorldPainter-LANGUAGES'
-$DefaultReleaseNotesPath = Join-Path $ProjectRoot 'docs\RELEASE_NOTES_2.27.1-L2.1.0.md'
+$DefaultReleaseNotesPath = Join-Path $ProjectRoot "docs\RELEASE_NOTES_$ProductVersion.md"
 $LogsDir = Join-Path $ReleaseDir 'logs'
 $UpdaterSourcePath = Join-Path $ProjectRoot 'tools\updater\WPUpdater.java'
 $UpdateLauncherPropsPath = Join-Path $StagingDir 'update-launcher.properties'
@@ -676,44 +677,63 @@ function Sync-GitHubDraftRelease {
 
 function Assert-VersionConsistency {
     # A version typo here is invisible until the build is already on users' machines: the update check inside the
-    # application compares its own CURRENT_FORK_VERSION against the release tag, so a stale constant makes every copy
+    # application compares its own CURRENT_PRODUCT_VERSION against the release tag, so a stale constant makes every copy
     # either offer an update to the version it already runs, or never notice the release at all.
-    $match = [regex]::Match($ProductVersion, '^(\d+)\.(\d+)\.(\d+)-L(\d+)\.(\d+)\.(\d+)$')
-    if (-not $match.Success) {
-        Fail "ProductVersion '$ProductVersion' is not <major>.<minor>.<patch>-L<major>.<minor>.<patch>."
+    if ($ProductVersion -notmatch '^\d+\.\d+\.\d+$') {
+        Fail "ProductVersion '$ProductVersion' is not <major>.<minor>.<patch>."
     }
-    $baseVersion = '{0}.{1}.{2}' -f $match.Groups[1].Value, $match.Groups[2].Value, $match.Groups[3].Value
-    $forkVersion = '{0}.{1}.{2}' -f $match.Groups[4].Value, $match.Groups[5].Value, $match.Groups[6].Value
 
-    if ($baseVersion -ne $MavenVersion) {
-        Fail "ProductVersion base '$baseVersion' does not match MavenVersion '$MavenVersion'."
+    $expectedWindowsVersion = "$ProductVersion.0"
+    if ($WindowsInstallerVersion -ne $expectedWindowsVersion) {
+        Fail "WindowsInstallerVersion '$WindowsInstallerVersion' does not match '$expectedWindowsVersion' derived from '$ProductVersion'."
     }
+
+    # The letter is what makes releases visible to builds up to 2.27.0-L2.0.1: they extract the number that follows
+    # 'L' and compare it against 2, ignoring the rest of the tag. A tag without it leaves those users on an old build
+    # with no notification at all.
+    $expectedTag = "L$ProductVersion"
+    if ($ReleaseTag -ne $expectedTag) {
+        Fail "ReleaseTag '$ReleaseTag' is not '$expectedTag'."
+    }
+    if ([int]($ProductVersion -split '\.')[0] -lt 3) {
+        Fail "ProductVersion '$ProductVersion' starts below 3, so builds up to 2.27.0-L2.0.1 would not recognise the release."
+    }
+    if ($ReleaseTitle -notlike "*$ProductVersion*") {
+        Fail "ReleaseTitle '$ReleaseTitle' does not mention version '$ProductVersion'."
+    }
+
+    # The Maven version stays on the upstream release this fork is based on, which is also where the jar names and the
+    # base version shown in the About dialog come from.
     $pomVersion = ([xml](Get-Content -LiteralPath (Join-Path $ProjectRoot 'pom.xml') -Raw)).project.version
     if ($pomVersion -ne $MavenVersion) {
         Fail "pom.xml declares version '$pomVersion', but this build expects '$MavenVersion'."
     }
 
     $checkerPath = Join-Path $ProjectRoot 'WPGUI\src\main\java\org\pepsoft\worldpainter\ForkUpdateChecker.java'
-    $checkerMatch = [regex]::Match((Get-Content -LiteralPath $checkerPath -Raw), 'CURRENT_FORK_VERSION\s*=\s*"([^"]+)"')
+    $checkerMatch = [regex]::Match((Get-Content -LiteralPath $checkerPath -Raw), 'CURRENT_PRODUCT_VERSION\s*=\s*"([^"]+)"')
     if (-not $checkerMatch.Success) {
-        Fail "Could not read CURRENT_FORK_VERSION from $checkerPath."
+        Fail "Could not read CURRENT_PRODUCT_VERSION from $checkerPath."
     }
-    if ($checkerMatch.Groups[1].Value -ne $forkVersion) {
-        Fail ("ForkUpdateChecker.CURRENT_FORK_VERSION is '{0}', but this build is L{1}: the shipped update check would compare against the wrong version." -f $checkerMatch.Groups[1].Value, $forkVersion)
-    }
-
-    $expectedWindowsVersion = '{0}.{1}.{2}' -f $match.Groups[1].Value, $match.Groups[2].Value,
-        (([int]$match.Groups[3].Value * 1000) + ([int]$match.Groups[4].Value * 100) + ([int]$match.Groups[5].Value * 10) + [int]$match.Groups[6].Value)
-    if ($WindowsInstallerVersion -ne $expectedWindowsVersion) {
-        Fail "WindowsInstallerVersion '$WindowsInstallerVersion' does not match '$expectedWindowsVersion' derived from '$ProductVersion'."
+    if ($checkerMatch.Groups[1].Value -ne $ProductVersion) {
+        Fail ("ForkUpdateChecker.CURRENT_PRODUCT_VERSION is '{0}', but this build is '{1}': the shipped update check would compare against the wrong version." -f $checkerMatch.Groups[1].Value, $ProductVersion)
     }
 
-    $expectedNotesName = "RELEASE_NOTES_$ProductVersion.md"
-    if ((Split-Path -Leaf $DefaultReleaseNotesPath) -ne $expectedNotesName) {
-        Fail "DefaultReleaseNotesPath points at '$(Split-Path -Leaf $DefaultReleaseNotesPath)' instead of '$expectedNotesName'."
+    $issPath = Join-Path $ScriptDir 'installer.iss'
+    $issMatch = [regex]::Match((Get-Content -LiteralPath $issPath -Raw), '#define\s+MyAppVersion\s+"([^"]+)"')
+    if (-not $issMatch.Success) {
+        Fail "Could not read MyAppVersion from $issPath."
+    }
+    if ($issMatch.Groups[1].Value -ne $ProductVersion) {
+        Fail ("installer.iss declares MyAppVersion '{0}' instead of '{1}', so the installer would be named and registered under the wrong version." -f $issMatch.Groups[1].Value, $ProductVersion)
     }
 
-    Write-Host "Version consistency: base $baseVersion, fork L$forkVersion, Windows $WindowsInstallerVersion - all sources agree"
+    # Release notes are named after the version, so bumping $ProductVersion without writing them is caught here rather
+    # than at 'gh release create', when the build is already finished and the tag is about to be pushed.
+    if (-not (Test-Path -LiteralPath $DefaultReleaseNotesPath -PathType Leaf)) {
+        Fail "Release notes for this version are missing: docs\RELEASE_NOTES_$ProductVersion.md"
+    }
+
+    Write-Host "Version consistency: product $ProductVersion, tag $ReleaseTag, Windows $WindowsInstallerVersion, base $MavenVersion - all sources agree"
 }
 
 Write-Host "WorldPainter Languages Windows installer preparation"
