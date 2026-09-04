@@ -1,8 +1,17 @@
 <!DOCTYPE html>
 <html>
-<!-- Parameters:
+<!-- This file is part of WorldPainter Languages, an unofficial localization fork of
+     WorldPainter (https://github.com/saplome/WorldPainter-LANGUAGES).
 
-     0 - version number
+     Original work Copyright © pepsoft.org, The Netherlands.
+     Modifications Copyright © 2026 saplome. This file was modified in 2026.
+
+     Licensed under the GNU General Public License, version 3. See LICENSE for details.
+
+     Careful: this file is a java.text.MessageFormat pattern, so curly braces delimit
+     placeholders and a literal apostrophe has to be doubled. Parameters:
+
+     0 - version number of the WorldPainter release this build is based on
      1 - 0 if not donated
          1 if donated
      2 - CSS style to use -->
@@ -10,14 +19,17 @@
     <style>{2}</style>
   </head>
   <body>
-    <b>WorldPainter - version {0}</b>
-    <p>&copy; 2011-2026 <a href="https://www.pepsoft.org/">pepsoft.org</a>, The Netherlands
-    <p>This program comes with ABSOLUTELY NO WARRANTY. This is free software, and you are welcome to redistribute it under the terms of the <a href="https://www.gnu.org/licenses/gpl-3.0.html">GNU General Public License</a>.
+    <b>WorldPainter Languages</b> &mdash; based on <b>WorldPainter {0}</b>
+    <p>Original work &copy; 2011-2026 <a href="https://www.pepsoft.org/">pepsoft.org</a>, The Netherlands, by Pepijn Schmitz
+    <p>Fork, interface translations, additional layers and packaging &copy; 2026 <a href="https://github.com/saplome">saplome</a>. WorldPainter Languages is an unofficial fork of WorldPainter and is not affiliated with the author of the original project.
+    <p>This program comes with ABSOLUTELY NO WARRANTY. This is free software, and you are welcome to redistribute it under the terms of the <a href="https://www.gnu.org/licenses/gpl-3.0.html">GNU General Public License</a>. The complete source code of this fork is available at <a href="https://github.com/saplome/WorldPainter-LANGUAGES">github.com/saplome/WorldPainter-LANGUAGES</a>.
     {1,choice,0#'<p><b>Thank you for donating!</b>
     <p>You have already donated to pepsoft.org for WorldPainter, for which we are very grateful!'|
     1#'<p><b>Donate:</b>
     <p>You are free to use this program without paying for it, but it takes a huge amount of effort to create and maintain, so it would be fantastic if you would show your appreciation with a small donation! Please click here to do so: <a href="action:///donate"><img src="https://www.paypalobjects.com/en_US/i/btn/btn_donate_LG.gif" border="0" width="92" height="26"></a>'}
     <p><b>Credits:</b>
+    <p><i>Interface translations, additional layers, themes and Windows packaging:</i><br>
+    github.com - <a href="https://github.com/saplome">saplome</a>
     <p><i>Cracked earth brush:</i><br>
     deviantart.com - <a href="https://ceiteach.deviantart.com/">ceiteach</a>
     <p><i>Flood fill algorithm:</i><br>
@@ -30,7 +42,7 @@
     <p><i>NBT reading and writing:</i><br>
     <a href="http://jnbt.sourceforge.net/">JNBT</a> by Graham Edgecombe
     <p><i>Installers:</i><br>
-    <a href="https://www.ej-technologies.com/products/install4j/overview.html">install4j</a> by <i><b><font color="blue">ej</font></b>-technologies</i>
+    <a href="https://openjdk.org/jeps/392">jpackage</a> by the OpenJDK project and <a href="https://jrsoftware.org/isinfo.php">Inno Setup</a> by Jordan Russell and Martijn Laan
     <p><i>Icons:</i><br>
     <a href="http://www.famfamfam.com/lab/icons/silk/">Silk icon set</a> by Mark James
     <p><i>Tablet support:</i><br>
