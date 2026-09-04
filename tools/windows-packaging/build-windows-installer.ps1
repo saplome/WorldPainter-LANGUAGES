@@ -49,6 +49,11 @@ $ProductVendor = 'saplome'
 # Without --copyright the launchers ship with an empty LegalCopyright, which is where Windows
 # looks for the author in the file properties dialog. ASCII on purpose: see the header.
 $ProductCopyright = 'Copyright (C) 2011-2026 pepsoft.org; modifications (C) 2026 saplome. GPL v3.'
+# The same line with the real copyright sign, built from its code point so that this file stays
+# ASCII. Windows stores version resources as UTF-16 and Inno Setup already turns its own (C)
+# into the symbol, so the two installers would otherwise disagree in the properties dialog.
+# Jar manifests are written with -Encoding ASCII, so those keep $ProductCopyright above.
+$ProductCopyrightSymbol = $ProductCopyright -replace '\(C\)', [string][char]0x00A9
 $ProductDescription = 'WorldPainter Languages'
 $MavenVersion = '2.27.1'
 $MainClass = 'org.pepsoft.worldpainter.Main'
@@ -466,7 +471,7 @@ function Invoke-JPackage {
         '--name', $ProductName,
         '--app-version', $WindowsInstallerVersion,
         '--vendor', $ProductVendor,
-        '--copyright', $ProductCopyright,
+        '--copyright', $ProductCopyrightSymbol,
         '--description', $ProductDescription,
         '--input', $AppDir,
         '--main-jar', $mainJarName,
@@ -518,7 +523,7 @@ function Invoke-JPackageAppImage {
         '--name', $ProductName,
         '--app-version', $WindowsInstallerVersion,
         '--vendor', $ProductVendor,
-        '--copyright', $ProductCopyright,
+        '--copyright', $ProductCopyrightSymbol,
         '--description', $ProductDescription,
         '--input', $AppDir,
         '--main-jar', $mainJarName,
