@@ -1,4 +1,11 @@
 # WorldPainter Languages: языки интерфейса.
+#
+# Этот файл — часть WorldPainter Languages, неофициального локализационного форка
+# WorldPainter (https://github.com/saplome/WorldPainter-LANGUAGES).
+# Copyright © 2026 saplome. Создан в 2026 году для WorldPainter Languages; в
+# оригинальном WorldPainter такого файла нет.
+# Распространяется по лицензии GNU General Public License, версия 3, — см. LICENSE.
+#
 # Новый язык = 9 файлов: (strings|blocks|gamedata|layers|swing|Category|GameType|Generator|LightOrigin)_<код>.properties
 # Формат:  <код> = <название, как оно показывается в меню>
 # Опция:   <код>.font = <шрифт 1>, <шрифт 2>, ... — первый установленный в системе шрифт заменяет стандартные шрифты интерфейса для этого языка
