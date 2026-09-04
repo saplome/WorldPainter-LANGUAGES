@@ -529,6 +529,28 @@ function Invoke-JPackage {
     Write-Host "Installer created: $finalInstallerPath"
 }
 
+function Copy-LegalFiles {
+    param([string]$AppImageRoot)
+
+    # Section 4 of the GPL wants the licence conveyed together with the binaries, and section 6 the
+    # offer of the source code: NOTICE.md carries the repository URL, the list of third-party
+    # components and the record of what the fork changed. Copying both next to the launcher puts
+    # them in the portable zip and in every installed copy, because Inno Setup ships the whole app
+    # image. CHANGELOG.md comes along so that the links inside NOTICE.md resolve offline.
+    # The incremental updater only replaces files under app/, so an updated installation keeps the
+    # copies it was installed with.
+    $names = @('LICENSE', 'NOTICE.md', 'CHANGELOG.md')
+    foreach ($name in $names) {
+        $source = Join-Path $ProjectRoot $name
+        if (-not (Test-Path -LiteralPath $source)) {
+            Fail "Legal file missing from the project root: $source"
+        }
+        Copy-Item -LiteralPath $source -Destination (Join-Path $AppImageRoot $name) -Force
+    }
+
+    Write-Host "Legal files copied into the app image: $($names -join ', ')"
+}
+
 function Invoke-JPackageAppImage {
     Ensure-CleanDirectory $AppImageDir
     $mainJarName = "WPGUI-$MavenVersion.jar"
@@ -557,6 +579,8 @@ function Invoke-JPackageAppImage {
     if (-not (Test-Path -LiteralPath $appImageRoot)) {
         Fail "jpackage completed, but the app image was not found: $appImageRoot"
     }
+
+    Copy-LegalFiles $appImageRoot
 
     Write-Host ""
     Write-Host "App image created: $appImageRoot"
