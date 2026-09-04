@@ -275,6 +275,20 @@ function New-UpdaterStaging {
     }
     Invoke-Checked 'jar' @('cfe', $updaterJarPath, $UpdaterMainClass, '-C', $updaterClassesDir, '.')
 
+    # The updater has no counterpart in the original project, so its jar carries the fork alone,
+    # without the Specification-* attributes the GUI jar uses for WorldPainter. Same reasoning as
+    # Update-GuiJarManifest: metadata only, readable with
+    #   unzip -p wp-updater-3.0.0.jar META-INF/MANIFEST.MF
+    $updaterManifestPath = Join-Path $StagingDir 'updater-manifest.mf'
+    $updaterManifestLines = @()
+    $updaterManifestLines += New-ManifestAttributeLines 'Implementation-Title' "$ProductName Updater"
+    $updaterManifestLines += New-ManifestAttributeLines 'Implementation-Version' $ProductVersion
+    $updaterManifestLines += New-ManifestAttributeLines 'Implementation-Vendor' $ProductVendor
+    $updaterManifestLines += New-ManifestAttributeLines 'Copyright' 'Copyright (C) 2026 saplome. GPL v3.'
+    $updaterManifestLines += ''
+    Set-Content -LiteralPath $updaterManifestPath -Value $updaterManifestLines -Encoding ASCII
+    Invoke-Checked 'jar' @('umf', $updaterManifestPath, $updaterJarPath)
+
     @(
         "# Configuration for $UpdaterJarName (WorldPainter-Update.exe)"
         "manifestUrl=$UpdateManifestUrl"
