@@ -1,3 +1,64 @@
+WorldPainter Languages is an unofficial localization fork of WorldPainter, made by saplome:
+https://github.com/saplome/WorldPainter-LANGUAGES
+
+The "WorldPainter Languages" entries below are the changes made by the fork, Copyright
+(C) 2026 saplome. Everything from "Version 2.27.1" onwards is the original WorldPainter
+change log by pepsoft.org, The Netherlands, reproduced here unchanged.
+
+-- WorldPainter Languages 3.0.0, released 2-9-2026 (based on WorldPainter 2.27.1)
+
+ * Base updated to WorldPainter 2.27.1
+ * Regular version numbers: 3.0.0 instead of 2.27.1-L2.1.0. The version of WorldPainter
+   this build is based on is shown in the About window and used in the jar file names
+   instead of being part of the version number, where it used to go stale silently
+ * Experimental [BETA] tree generator, translated into all eleven languages
+ * "Update now" in the update dialog: WorldPainter closes, the updater downloads only the
+   files that actually changed, asks for elevation when the installation directory needs
+   it, writes %LOCALAPPDATA%\WorldPainter Languages\updater.log and starts WorldPainter
+   again. If anything fails, nothing is changed and WorldPainter simply starts again
+ * The update check compares the whole version number instead of only its first component,
+   so 3.0.0 is correctly recognised as newer than 2.0.1
+ * Obsolete files from the previous release are removed during an update
+
+-- WorldPainter Languages 2.27.0-L2.0.1, released 28-7-2026
+
+ * Incremental updater: SHA-256 manifest, only changed files are downloaded, files are
+   replaced atomically and obsolete files are deleted
+ * The experimental tree generator was withdrawn from this release
+
+-- WorldPainter Languages 2.27.0-L2.0.0, released 21-7-2026
+
+ * Five more interface languages: German, French, Spanish, Italian and Chinese (Simplified)
+ * [BETA] Cave System custom layer: 3D density field, noise halls, cheese and grand
+   caverns, spaghetti, backbone and noodle tunnels, entrances, aquifers, lush and
+   dripstone areas
+ * [BETA] Icebergs custom layer, and the ICE and PACKED_ICE terrains
+ * "Save a copy for the original WorldPainter" for worlds that use fork only layers
+ * FlatLaf Cyan light and FlatLaf One Dark themes with their own interface icon sets,
+   1107 block and material icons and 95 biome sprites
+ * Modern Windows file dialog (IFileDialog) with a Swing fallback
+ * Automatic and manual update check for the fork
+ * Windows file association for .world and a packaging toolkit for Portable, WiX/MSI and
+   Inno Setup
+ * Interface icons for layers, operations, panels and JIDE controls became theme aware
+ * Block, plant and biome terminology checked against Minecraft and the localised wikis
+
+-- WorldPainter Languages 2.27.0-L1, released 11-7-2026
+
+ * Ukrainian, Belarusian and Kazakh interface languages, in full parity with Russian
+ * Translations split into strings, blocks, gamedata, layers and swing bundles, routed by
+   key prefix with a fallback to the main bundle
+ * Settings live in their own "WorldPainter Languages" folder; on first run the existing
+   WorldPainter settings are copied over, leaving the original untouched
+ * 195 unused interface keys removed from every language at once
+
+-- WorldPainter RU 2.27.0-r1, released 6-7-2026
+
+ * First public release of the fork: complete Russian interface, resource bundles in UTF-8
+   without \uXXXX escapes
+
+The original WorldPainter change log by pepsoft.org follows.
+
 -- Version 2.27.1, released 30-8-2027
 
  * Bug fix: make setting the spawn point work once again for Minecraft 26.1 and later
