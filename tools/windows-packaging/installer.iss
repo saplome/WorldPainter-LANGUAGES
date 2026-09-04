@@ -1,4 +1,11 @@
 ; Inno Setup 6 script for WorldPainter Languages
+;
+; This file is part of WorldPainter Languages, an unofficial localization fork of WorldPainter
+; (https://github.com/saplome/WorldPainter-LANGUAGES).
+; Copyright (C) 2026 saplome. Written in 2026 for WorldPainter Languages; the original project
+; ships no Inno Setup script. Licensed under the GNU General Public License, version 3, the same
+; licence as the application it packages. See the LICENSE file for details.
+;
 ; Requires Inno Setup 6: https://jrsoftware.org/isdl.php
 ; Build the app image first:
 ;   powershell -ExecutionPolicy Bypass -File .\tools\windows-packaging\build-windows-installer.ps1 -BuildAppImage
@@ -7,7 +14,12 @@
 
 #define MyAppName "WorldPainter Languages"
 #define MyAppVersion "3.0.0"
-#define MyAppPublisher "WorldPainter Languages"
+; The publisher is the person who maintains this fork, which is what Windows shows in
+; "Apps & features" and in the UAC prompt; the application name is separate, above.
+#define MyAppPublisher "saplome"
+; Keep this ASCII: Inno only reads a .iss as UTF-8 when the file has a byte order mark, so a
+; (c) sign would end up mojibake in Setup.exe version information on a non-UTF-8 code page.
+#define MyAppCopyright "Copyright (C) 2011-2026 pepsoft.org; modifications (C) 2026 saplome. GPL v3."
 #define MyAppURL "https://github.com/saplome/WorldPainter-LANGUAGES"
 #define MyAppExeName "WorldPainter Languages.exe"
 #define AppImageDir "..\..\release\app-image\WorldPainter Languages"
@@ -21,6 +33,10 @@ AppPublisher={#MyAppPublisher}
 AppPublisherURL={#MyAppURL}
 AppSupportURL={#MyAppURL}
 AppUpdatesURL={#MyAppURL}
+; Without this, Setup.exe ships with an empty LegalCopyright, which Windows shows as a blank
+; line in the Details tab. Inno derives VersionInfoCopyright and VersionInfoCompany from
+; AppCopyright and AppPublisher, so setting these two covers the whole version resource.
+AppCopyright={#MyAppCopyright}
 DefaultDirName={autopf}\{#MyAppName}
 DefaultGroupName={#MyAppName}
 DisableProgramGroupPage=yes

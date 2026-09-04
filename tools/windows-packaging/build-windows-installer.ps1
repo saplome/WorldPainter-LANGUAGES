@@ -1,3 +1,13 @@
+# This file is part of WorldPainter Languages, an unofficial localization fork of
+# WorldPainter (https://github.com/saplome/WorldPainter-LANGUAGES).
+#
+# Copyright (C) 2026 saplome. Written in 2026 for WorldPainter Languages; the original
+# project ships no such script. Kept ASCII on purpose: PowerShell 5.1 reads a .ps1 without
+# a byte order mark using the ANSI code page, which mangles non-ASCII characters.
+#
+# Licensed under the GNU General Public License, version 3, the same licence as the
+# application it builds. See the LICENSE file for details.
+
 #requires -version 5.1
 
 [CmdletBinding()]
@@ -33,7 +43,12 @@ $ProductVersion = '3.0.0'
 # builds used - L1, L2.0.0, L2.0.1, then 3.0.0 - so they compare it correctly. Keep it monotonic across releases.
 $WindowsInstallerVersion = '3.0.0.0'
 $WindowsUpgradeUuid = 'd5984a7f-cb32-48c8-b6f1-97a3c4c0da44'
-$ProductVendor = 'WorldPainter Languages'
+# jpackage writes --vendor into CompanyName of both launchers and into the Publisher shown by
+# Windows in "Apps & features", so this is the author of the fork, not the product name.
+$ProductVendor = 'saplome'
+# Without --copyright the launchers ship with an empty LegalCopyright, which is where Windows
+# looks for the author in the file properties dialog. ASCII on purpose: see the header.
+$ProductCopyright = 'Copyright (C) 2011-2026 pepsoft.org; modifications (C) 2026 saplome. GPL v3.'
 $ProductDescription = 'WorldPainter Languages'
 $MavenVersion = '2.27.1'
 $MainClass = 'org.pepsoft.worldpainter.Main'
@@ -219,12 +234,23 @@ function Update-GuiJarManifest {
     $manifestPath = Join-Path $StagingDir 'jpackage-manifest.mf'
     $manifestLines = @("Main-Class: $MainClass")
     $manifestLines += New-ManifestAttributeLines 'Class-Path' ($classPathEntries -join ' ')
+    # Authorship of the shipped jar, so it is readable without unpacking it:
+    #   unzip -p "WorldPainter Languages.jar" META-INF/MANIFEST.MF
+    # Nothing in the application reads these, Version.VERSION comes from a properties file, so they
+    # are metadata only. Implementation-Version is the fork version, not the Maven/base version.
+    # ASCII on purpose: the manifest is written with -Encoding ASCII below.
+    $manifestLines += New-ManifestAttributeLines 'Implementation-Title' $ProductName
+    $manifestLines += New-ManifestAttributeLines 'Implementation-Version' $ProductVersion
+    $manifestLines += New-ManifestAttributeLines 'Implementation-Vendor' $ProductVendor
+    $manifestLines += New-ManifestAttributeLines 'Specification-Title' "WorldPainter $MavenVersion"
+    $manifestLines += New-ManifestAttributeLines 'Specification-Vendor' 'pepsoft.org'
+    $manifestLines += New-ManifestAttributeLines 'Copyright' $ProductCopyright
     $manifestLines += ''
 
     Set-Content -LiteralPath $manifestPath -Value $manifestLines -Encoding ASCII
     Invoke-Checked 'jar' @('umf', $manifestPath, $GuiJarPath)
 
-    Write-Host "Updated staged GUI jar manifest with Main-Class and Class-Path."
+    Write-Host "Updated staged GUI jar manifest with Main-Class, Class-Path and authorship."
 }
 
 function New-UpdaterStaging {
@@ -440,6 +466,7 @@ function Invoke-JPackage {
         '--name', $ProductName,
         '--app-version', $WindowsInstallerVersion,
         '--vendor', $ProductVendor,
+        '--copyright', $ProductCopyright,
         '--description', $ProductDescription,
         '--input', $AppDir,
         '--main-jar', $mainJarName,
@@ -491,6 +518,7 @@ function Invoke-JPackageAppImage {
         '--name', $ProductName,
         '--app-version', $WindowsInstallerVersion,
         '--vendor', $ProductVendor,
+        '--copyright', $ProductCopyright,
         '--description', $ProductDescription,
         '--input', $AppDir,
         '--main-jar', $mainJarName,
