@@ -1,3 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Russian WiX localization file for WorldPainter Languages, an unofficial localization
+     fork of WorldPainter (https://github.com/saplome/WorldPainter-LANGUAGES).
+     Copyright (C) 2026 saplome. Written in 2026 for this fork, modelled on jpackage's
+     MsiInstallerStrings_en.wxl (Copyright (C) Oracle and/or its affiliates, OpenJDK,
+     GPL version 2 with the Classpath exception).
+
+     Deliberately holds no strings: jpackage only ever loads MsiInstallerStrings_ for en,
+     ja and zh_CN, so the Russian text lives directly in the .wxs files instead. Kept as
+     documentation of the culture and code page those files assume. -->
+
 <WixLocalization Culture="ru-ru" xmlns="http://schemas.microsoft.com/wix/2006/localization" Codepage="1251">
 </WixLocalization>

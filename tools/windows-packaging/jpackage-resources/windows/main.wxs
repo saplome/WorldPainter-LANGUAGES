@@ -1,4 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- This is jpackage's own main.wxs, copied out of the JDK (jdk.jpackage/resources) and
+     modified for WorldPainter Languages, an unofficial localization fork of WorldPainter
+     (https://github.com/saplome/WorldPainter-LANGUAGES).
+
+     Original file Copyright (C) Oracle and/or its affiliates, released with the OpenJDK
+     under GPL version 2 with the Classpath exception; the JDK ships this one without a
+     file header, unlike the dialog resources next to it.
+
+     Modifications Copyright (C) 2026 saplome, made in 2026: Russian JpProductLanguage
+     (1049) and Codepage (1251), literal Russian upgrade and downgrade messages instead of
+     !(loc.*) references, and the "launch the application" checkbox on the exit dialog.
+
+     Build-time resource that jpackage takes from its resource-dir; it is not part of the
+     application source and is not installed. -->
+
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi"
      xmlns:util="http://schemas.microsoft.com/wix/UtilExtension">
 
