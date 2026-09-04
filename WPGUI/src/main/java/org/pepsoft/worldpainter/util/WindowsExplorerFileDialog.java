@@ -1,3 +1,14 @@
+/*
+ * This file is part of WorldPainter Languages, an unofficial localization
+ * fork of WorldPainter (https://github.com/saplome/WorldPainter-LANGUAGES).
+ *
+ * Copyright © 2026 saplome. Written in 2026 for WorldPainter Languages;
+ * it is not part of the original WorldPainter by pepsoft.org.
+ *
+ * Licensed under the GNU General Public License, version 3.
+ * See the LICENSE file for details.
+ */
+
 package org.pepsoft.worldpainter.util;
 
 import com.sun.jna.Function;

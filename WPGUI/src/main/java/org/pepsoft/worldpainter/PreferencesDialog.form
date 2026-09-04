@@ -1,5 +1,16 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 
+<!--
+    This file is part of WorldPainter Languages, an unofficial localization fork of
+    WorldPainter (https://github.com/saplome/WorldPainter-LANGUAGES).
+
+    Original work Copyright © pepsoft.org, The Netherlands.
+    Modifications Copyright © 2026 saplome. This file was modified in 2026.
+
+    This file remains licensed under the GNU General Public License, version 3.
+    See the LICENSE file for details.
+-->
+
 <Form version="1.5" maxVersion="1.7" type="org.netbeans.modules.form.forminfo.JDialogFormInfo">
   <NonVisualComponents>
     <Component class="javax.swing.ButtonGroup" name="buttonGroup1">

@@ -1,4 +1,15 @@
 /*
+ * This file is part of WorldPainter Languages, an unofficial localization
+ * fork of WorldPainter (https://github.com/saplome/WorldPainter-LANGUAGES).
+ *
+ * Original work Copyright © pepsoft.org, The Netherlands.
+ * Modifications Copyright © 2026 saplome. This file was modified in 2026.
+ *
+ * This file remains licensed under the GNU General Public License,
+ * version 3. See the LICENSE file for details.
+ */
+
+/*
  * To change this license header, choose License Headers in Project Properties.
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
@@ -53,6 +64,8 @@ public class ScriptingTool {
 
         System.err.println("WorldPainter scripting host version " + Version.VERSION + ".\n" +
                 "Copyright 2011-2026 pepsoft.org, The Netherlands.\n" +
+                "Modified and distributed as part of WorldPainter Languages, an unofficial\n" +
+                "localization fork; modifications copyright 2026 saplome.\n" +
                 "This is free software distributed under the terms of the GPL, version 3, a copy\n" +
                 "of which you can find in the installation directory.\n");
 

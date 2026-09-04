@@ -1,3 +1,11 @@
+# This file is part of WorldPainter Languages, an unofficial localization fork of
+# WorldPainter (https://github.com/saplome/WorldPainter-LANGUAGES).
+#
+# Original work Copyright © pepsoft.org, The Netherlands.
+# Modifications Copyright © 2026 saplome. This file was modified in 2026.
+#
+# Licensed under the GNU General Public License, version 3. See LICENSE for details.
+
 # Build output
 target/
 # Anchored to the project root: tools/release holds the packaging scripts, which have to be tracked.

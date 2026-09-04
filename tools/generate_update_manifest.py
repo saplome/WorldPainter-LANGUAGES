@@ -1,4 +1,14 @@
 #!/usr/bin/env python3
+#
+# This file is part of WorldPainter Languages, an unofficial localization fork of
+# WorldPainter (https://github.com/saplome/WorldPainter-LANGUAGES).
+#
+# Copyright (C) 2026 saplome. Written in 2026 for WorldPainter Languages; the original
+# project ships no such script.
+#
+# Licensed under the GNU General Public License, version 3, the same licence as the
+# application whose update manifest it generates. See the LICENSE file for details.
+#
 """Generate an update-manifest.txt for the WorldPainter Languages updater.
 
 Cross-platform equivalent of the -GenerateUpdateManifest switch of

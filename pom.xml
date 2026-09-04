@@ -1,3 +1,19 @@
+<!--
+    This file is part of WorldPainter Languages, an unofficial localization fork of
+    WorldPainter (https://github.com/saplome/WorldPainter-LANGUAGES).
+
+    Original work Copyright © pepsoft.org, The Netherlands.
+    Modifications Copyright © 2026 saplome. This file was modified in 2026.
+
+    This file remains licensed under the GNU General Public License, version 3.
+    See the LICENSE file for details.
+
+    groupId, artifactId and version deliberately still describe the upstream project: the
+    version is the base WorldPainter release this fork is built from, and the artifact names
+    end up in the jar file names that the packaging scripts, the installer and the update
+    manifest all refer to. The fork's own version is $ProductVersion in
+    tools/windows-packaging/build-windows-installer.ps1.
+-->
 <project>
     <modelVersion>4.0.0</modelVersion>
 
@@ -6,9 +22,9 @@
     <version>2.27.1</version>
     <packaging>pom</packaging>
 
-    <name>WorldPainter</name>
-    <description>WorldPainter is an interactive map generator for Minecraft. It allows you to "paint" landscapes using similar tools as a regular paint program. Sculpt and mould the terrain, paint materials, trees, snow and ice, etc. onto it, and much more.</description>
-    <url>https://www.worldpainter.net/</url>
+    <name>WorldPainter Languages</name>
+    <description>WorldPainter Languages is an unofficial multilingual fork of WorldPainter, an interactive map generator for Minecraft. It allows you to "paint" landscapes using similar tools as a regular paint program. Sculpt and mould the terrain, paint materials, trees, snow and ice, etc. onto it, and much more. This fork adds a fully translated interface in 11 languages, extra themes and icons, Windows integration and additional generation layers.</description>
+    <url>https://github.com/saplome/WorldPainter-LANGUAGES</url>
     <inceptionYear>2011</inceptionYear>
 
     <licenses>
@@ -20,16 +36,31 @@
     </licenses>
 
     <organization>
-        <name>pepsoft.org</name>
-        <url>https://www.pepsoft.org/</url>
+        <name>WorldPainter Languages</name>
+        <url>https://github.com/saplome/WorldPainter-LANGUAGES</url>
     </organization>
 
     <developers>
         <developer>
+            <id>Captain-Chaos</id>
             <name>Pepijn Schmitz</name>
             <organization>pepsoft.org</organization>
+            <organizationUrl>https://www.pepsoft.org/</organizationUrl>
             <email>Pepijn.Schmitz@pepsoft.org</email>
             <timezone>Europe/Amsterdam</timezone>
+            <roles>
+                <role>Author of WorldPainter, the original work this fork is derived from</role>
+            </roles>
+        </developer>
+        <developer>
+            <id>saplome</id>
+            <name>saplome</name>
+            <email>saplome@users.noreply.github.com</email>
+            <url>https://github.com/saplome</url>
+            <roles>
+                <role>Author and maintainer of the WorldPainter Languages fork</role>
+                <role>Translations, additional layers, packaging and the update channel</role>
+            </roles>
         </developer>
     </developers>
 
@@ -54,9 +85,12 @@
         </repository>
     </repositories>
 
+    <!-- This tree is the fork, not the upstream repository; the upstream project it is derived
+         from is https://github.com/Captain-Chaos/WorldPainter. -->
     <scm>
-        <connection>scm:git:https://github.com/Captain-Chaos/WorldPainter.git</connection>
-        <url>https://github.com/Captain-Chaos/WorldPainter</url>
+        <connection>scm:git:https://github.com/saplome/WorldPainter-LANGUAGES.git</connection>
+        <developerConnection>scm:git:https://github.com/saplome/WorldPainter-LANGUAGES.git</developerConnection>
+        <url>https://github.com/saplome/WorldPainter-LANGUAGES</url>
     </scm>
 
     <build>
