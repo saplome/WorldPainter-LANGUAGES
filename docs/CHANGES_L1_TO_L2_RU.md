@@ -194,3 +194,7 @@
 Для L2 выполняются статические проверки структуры, переводов, XML/form/WXS, PNG, seed offsets и целостности ZIP. Финальная геометрия слоя пещер принимается после пользовательского runtime-теста.
 
 Финальная Maven-сборка, запуск и smoke-test релизных Setup/Portable выполняются отдельно на Windows с JDK 17.
+
+---
+
+**WorldPainter Languages** — неофициальный локализационный форк [WorldPainter](https://www.pepsoft.org/WorldPainter/), © 2011–2026 pepsoft.org, Нидерланды. Этот документ написан в 2026 году для WorldPainter Languages и не входит в оригинальный проект; © 2026 [saplome](https://github.com/saplome). Лицензия — [GNU General Public License v3](../LICENSE), та же, что и у приложения.

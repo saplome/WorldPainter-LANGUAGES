@@ -94,3 +94,7 @@ git -C @@SRC_DIR@@ push origin HEAD
 | `../cdn/` | содержимое репозитория `@@CDN_REPO@@` |
 
 Как устроен канал обновлений целиком — `docs/UPDATE_CHANNEL_RU.md`.
+
+---
+
+**WorldPainter Languages** — неофициальный локализационный форк [WorldPainter](https://www.pepsoft.org/WorldPainter/), © 2011–2026 pepsoft.org, Нидерланды. Этот шаблон инструкции по публикации написан в 2026 году для WorldPainter Languages; © 2026 [saplome](https://github.com/saplome). Лицензия — GNU General Public License v3; полный текст — в файле `LICENSE` репозитория `@@MAIN_REPO@@`.

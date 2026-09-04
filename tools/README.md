@@ -58,3 +58,7 @@ powershell -ExecutionPolicy Bypass -File .\tools\windows-packaging\build-windows
 ```
 
 Перед сборкой набора скрипт сверяет манифест обновления с содержимым `release/cdn/app` — размер, SHA-256 и URL каждого файла — и останавливается, если что-то расходится. Запускать после каждой пересборки архивов. Порядок публикации и устройство канала обновлений: `docs/UPDATE_CHANNEL_RU.md`.
+
+---
+
+**WorldPainter Languages** — неофициальный локализационный форк [WorldPainter](https://www.pepsoft.org/WorldPainter/), © 2011–2026 pepsoft.org, Нидерланды. Этот документ и сценарии каталога `tools/` написаны в 2026 году для WorldPainter Languages — в оригинальном WorldPainter каталога `tools/` нет; © 2026 [saplome](https://github.com/saplome). Лицензия — [GNU General Public License v3](../LICENSE), та же, что и у приложения.

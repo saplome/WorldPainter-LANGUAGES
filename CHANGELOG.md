@@ -131,3 +131,7 @@
 ## [2.27.0-r1] - 2026-07-06
 
 Первый публичный релиз WorldPainter RU на базе WorldPainter 2.27.0.
+
+---
+
+**WorldPainter Languages** — неофициальный локализационный форк [WorldPainter](https://www.pepsoft.org/WorldPainter/), © 2011–2026 pepsoft.org, Нидерланды. Этот журнал изменений написан в 2026 году для WorldPainter Languages и описывает только изменения форка; © 2026 [saplome](https://github.com/saplome). Лицензия — [GNU General Public License v3](LICENSE), та же, что и у приложения.

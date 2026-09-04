@@ -60,3 +60,7 @@ L2.0.1 об этом релизе сообщит сам (в теге есть `L
 Обычные миры без возможностей форка совместимы с оригинальным WorldPainter 2.27.1. Для миров с `CaveSystem`, `Icebergs`, `ICE` или `PACKED_ICE` используйте команду **«Сохранить копию для оригинального WorldPainter…»**.
 
 Внутренний ID слоя: `org.pepsoft.CaveSystem`. Формат сохранения не изменился относительно L2.0.0.
+
+---
+
+**WorldPainter Languages** — неофициальный локализационный форк [WorldPainter](https://www.pepsoft.org/WorldPainter/), © 2011–2026 pepsoft.org, Нидерланды. Этот документ написан в 2026 году для WorldPainter Languages и не входит в оригинальный проект; © 2026 [saplome](https://github.com/saplome). Лицензия — [GNU General Public License v3](../LICENSE), та же, что и у приложения.

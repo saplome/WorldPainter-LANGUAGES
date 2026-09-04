@@ -61,3 +61,7 @@ cd <корень исходников>
 Скрипт копирует `release\staging\app` во временный каталог (`%TEMP%\wp-updater-local-test`) как «CDN» и как «установку», поднимает `http://localhost:8000/`, генерирует манифест и проверяет семь сценариев: актуальное состояние (exit 0), обнаружение обновлений (exit 1), докачку только изменённых файлов + новый файл + `delete=` без остатков `*.wpupdate-tmp`, повторный запуск как no-op, отказ при испорченной загрузке (exit 2, локальные файлы целы), отсутствующий манифест (exit 2) и попытку заменить сам апдейтер (exit 0, jar не тронут).
 
 Параметры: `-ProjectRoot <путь>`, `-Port <порт>`, `-WorkDir <путь>`, `-KeepWorkDir`. Требуется JDK 17 (`java` в PATH). Если порт не поднимается без прав администратора: `netsh http add urlacl url=http://localhost:8000/ user=%USERNAME%` либо `-Port` другой.
+
+---
+
+**WorldPainter Languages** — неофициальный локализационный форк [WorldPainter](https://www.pepsoft.org/WorldPainter/), © 2011–2026 pepsoft.org, Нидерланды. Этот документ и сценарии каталога `tools/` написаны в 2026 году для WorldPainter Languages — в оригинальном WorldPainter каталога `tools/` нет; © 2026 [saplome](https://github.com/saplome). Лицензия — [GNU General Public License v3](../../LICENSE), та же, что и у приложения.

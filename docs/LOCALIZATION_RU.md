@@ -23,3 +23,7 @@ WPGUI/src/main/resources/org/pepsoft/worldpainter/resources/
 3. Правки кода не требуются.
 
 Важно: сохраняйте плейсхолдеры `{0}`, `{1}` и HTML-теги в значениях; количество ключей во всех языках должно совпадать.
+
+---
+
+**WorldPainter Languages** — неофициальный локализационный форк [WorldPainter](https://www.pepsoft.org/WorldPainter/), © 2011–2026 pepsoft.org, Нидерланды. Этот документ написан в 2026 году для WorldPainter Languages и не входит в оригинальный проект; © 2026 [saplome](https://github.com/saplome). Лицензия — [GNU General Public License v3](../LICENSE), та же, что и у приложения.

@@ -147,3 +147,7 @@ curl -s https://raw.githubusercontent.com/saplome/WorldPainter-LANGUAGES-cdn/mai
 Локальная проверка всего канала без публикации: `tools\updater\test-updater-local.ps1` поднимает
 HTTP-сервер на localhost, генерирует манифест и прогоняет семь сценариев, включая порчу файла и
 попытку заменить сам апдейтер.
+
+---
+
+**WorldPainter Languages** — неофициальный локализационный форк [WorldPainter](https://www.pepsoft.org/WorldPainter/), © 2011–2026 pepsoft.org, Нидерланды. Этот документ написан в 2026 году для WorldPainter Languages и не входит в оригинальный проект; © 2026 [saplome](https://github.com/saplome). Лицензия — [GNU General Public License v3](../LICENSE), та же, что и у приложения.
