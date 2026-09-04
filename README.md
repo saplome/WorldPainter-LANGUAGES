@@ -220,8 +220,17 @@ powershell -ExecutionPolicy Bypass -File .\tools\windows-packaging\build-windows
 
 WorldPainter Languages дополняет оригинальный проект локализациями и возможностями форка, но не заменяет официальную версию.
 
+---
+
 ## Лицензия
 
-WorldPainter Languages распространяется на условиях **GNU General Public License v3**.
+WorldPainter Languages распространяется на условиях **GNU General Public License v3** — той же лицензии, что и оригинальная программа.
 
-Полный текст лицензии находится в [LICENSE](LICENSE), сведения об оригинальном проекте и модификациях — в [NOTICE.md](NOTICE.md).
+| Что | Авторские права |
+| --- | --- |
+| Оригинальный WorldPainter | © 2011–2026 [pepsoft.org](https://www.pepsoft.org/), Нидерланды — Pepijn Schmitz (Captain-Chaos) |
+| Форк: переводы на 10 языков, дополнительные слои, темы, иконки, Windows-упаковка, канал обновлений и документация | © 2026 [saplome](https://github.com/saplome) |
+
+Изменения относительно оригинального WorldPainter 2.27.1 внесены в 2026 году saplome. Каждый изменённый и каждый новый файл помечен в заголовке, кто и когда его изменил или создал; перечень изменений по версиям — в [CHANGELOG.md](CHANGELOG.md).
+
+Полный текст лицензии находится в [LICENSE](LICENSE), сведения об оригинальном проекте и модификациях — в [NOTICE.md](NOTICE.md). Исходный код форка целиком доступен в этом репозитории — [saplome/WorldPainter-LANGUAGES](https://github.com/saplome/WorldPainter-LANGUAGES) — как того требует GPL v3 для распространяемых сборок.
