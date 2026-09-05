@@ -428,42 +428,8 @@ function New-CdnPayload {
         '* -text'
     ) | Set-Content -LiteralPath (Join-Path $CdnDir '.gitattributes') -Encoding ascii
 
-    $readmePath = Join-Path $CdnDir 'README.md'
-    @(
-        '# WorldPainter Languages update CDN'
-        ''
-        'Download host for the incremental updater of'
-        '[WorldPainter Languages](https://github.com/saplome/WorldPainter-LANGUAGES).'
-        ''
-        "Current contents: application files of **$ProductVersion**."
-        ''
-        '`app/` mirrors the `app/` directory of an installation one to one. `WorldPainter-Update.exe` reads'
-        '`update-manifest.txt` from the release assets of the main repository and downloads only the files whose'
-        'SHA-256 differs, from:'
-        ''
-        '```'
-        "$($UpdateBaseUrl.TrimEnd('/'))/<path inside app>"
-        '```'
-        ''
-        '`update-manifest.txt` is copied here for reference only; the client always reads the copy attached to the'
-        'release in the main repository.'
-        ''
-        '## Updating this repository for a new release'
-        ''
-        '1. Replace `app/` with the `app/` directory of the new build.'
-        '2. Commit and push to `main` **before** publishing the GitHub release, so every URL in the new manifest'
-        '   already resolves.'
-        '3. Upload the new `update-manifest.txt` as an asset of the release in the main repository.'
-        ''
-        'Keep `.gitattributes` (`* -text`) in place. The updater verifies SHA-256 of the served bytes, so any'
-        'end-of-line normalisation by git would break every download of the `.cfg` and `.properties` files.'
-        ''
-        'Do not enable Git LFS here either: `raw.githubusercontent.com` would serve the LFS pointer text instead of'
-        'the file.'
-        ''
-        'No license file of its own: these are build artifacts of WorldPainter Languages (GPLv3).'
-    ) | Set-Content -LiteralPath $readmePath -Encoding utf8
-
+    # No README: this repository is a download host, not something to read. The instructions for maintaining it
+    # belong with the sources, in docs/UPDATE_CHANNEL_RU.md, not next to the payload where every visitor lands.
     $files = @(Get-ChildItem -LiteralPath $cdnAppDir -Recurse -File)
     $totalBytes = ($files | Measure-Object Length -Sum).Sum
     Write-Host ""

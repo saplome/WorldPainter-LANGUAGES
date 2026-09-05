@@ -69,8 +69,8 @@ README, .gitignore и лицензии → Create.
 gh repo create saplome/WorldPainter-LANGUAGES-cdn --public --description "Update host for WorldPainter Languages"
 ```
 
-Затем залить подготовленную папку `release\cdn` (в ней уже лежат `app/`, `update-manifest.txt`,
-`README.md` и `.gitattributes`):
+Затем залить подготовленную папку `release\cdn` (в ней уже лежат `app/`, `update-manifest.txt` и
+`.gitattributes`):
 
 ```bash
 cd /c/WorldPainter-LANGUAGES-main/WorldPainter-Languages/release/cdn
@@ -94,7 +94,7 @@ git push -u origin main
 
 | Файл или папка | Куда |
 | --- | --- |
-| `release\cdn\` (`app/`, `.gitattributes`, `README.md`, `update-manifest.txt`) | коммит в `WorldPainter-LANGUAGES-cdn`, ветка `main` |
+| `release\cdn\` (`app/`, `.gitattributes`, `update-manifest.txt`) | коммит в `WorldPainter-LANGUAGES-cdn`, ветка `main` |
 | `release\update-manifest.txt` | ассет релиза |
 | `release\installer\WorldPainter-Languages-3.0.0-Setup.exe` | ассет релиза |
 | `release\WorldPainter-Languages-3.0.0-Portable.zip` | ассет релиза |
