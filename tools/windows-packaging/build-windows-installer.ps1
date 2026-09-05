@@ -131,6 +131,28 @@ function Ensure-CleanDirectory {
     New-Item -ItemType Directory -Path $fullPath -Force | Out-Null
 }
 
+function Clear-DirectoryExceptGit {
+    param([string]$Path)
+
+    # Empties a directory but keeps its .git, so a payload directory can be rebuilt from scratch
+    # without losing the working copy that pushes it.
+    $root = [System.IO.Path]::GetFullPath($ProjectRoot)
+    $fullPath = [System.IO.Path]::GetFullPath($Path)
+
+    if (-not $fullPath.StartsWith($root, [System.StringComparison]::OrdinalIgnoreCase)) {
+        Fail "Refusing to clean a directory outside the project: $fullPath"
+    }
+
+    if (-not (Test-Path -LiteralPath $fullPath)) {
+        New-Item -ItemType Directory -Path $fullPath -Force | Out-Null
+        return
+    }
+
+    Get-ChildItem -LiteralPath $fullPath -Force |
+        Where-Object { $_.Name -ne '.git' } |
+        ForEach-Object { Remove-Item -LiteralPath $_.FullName -Recurse -Force }
+}
+
 function Invoke-Checked {
     param(
         [string]$Tool,
@@ -384,7 +406,12 @@ function New-CdnPayload {
     # Everything the updater downloads is served from a plain repository, because GitHub release assets are flat and
     # cannot carry the app/lib/... layout. This produces the exact directory to push, so the published hashes and the
     # served bytes can never drift apart.
-    Ensure-CleanDirectory $CdnDir
+    #
+    # Everything except .git is replaced: publish-step1-cdn.sh turns this directory into the working copy of the CDN
+    # repository, and wiping .git along with the payload would strip it of the remote history. Its push would then be
+    # rejected as unrelated, and the release could only go out after a force push. Files that disappeared from the app
+    # image have to leave the payload, which is why the rest of the directory is deleted rather than overwritten.
+    Clear-DirectoryExceptGit $CdnDir
     $cdnAppDir = Join-Path $CdnDir 'app'
     Copy-Item -LiteralPath $SourceAppDir -Destination $cdnAppDir -Recurse -Force
 
