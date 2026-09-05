@@ -13,7 +13,7 @@
 ;   powershell -ExecutionPolicy Bypass -File .\tools\windows-packaging\build-windows-installer.ps1 -BuildInnoInstaller
 
 #define MyAppName "WorldPainter Languages"
-#define MyAppVersion "3.0.0"
+#define MyAppVersion "3.0.1"
 ; The publisher is the person who maintains this fork, which is what Windows shows in
 ; "Apps & features" and in the UAC prompt; the application name is separate, above.
 #define MyAppPublisher "saplome"

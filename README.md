@@ -9,7 +9,7 @@
   </p>
 
   <p>
-    <img alt="Release" src="https://img.shields.io/badge/release-3.0.0-e53935?style=for-the-badge">
+    <img alt="Release" src="https://img.shields.io/badge/release-3.0.1-e53935?style=for-the-badge">
     <img alt="Base" src="https://img.shields.io/badge/base-WorldPainter%202.27.1-2d8cff?style=for-the-badge">
     <img alt="Languages" src="https://img.shields.io/badge/languages-EN%20%2B%2010-6d4aff?style=for-the-badge">
     <img alt="License" src="https://img.shields.io/badge/license-GPLv3-43a047?style=for-the-badge">
@@ -36,7 +36,7 @@
 
 WorldPainter — интерактивный редактор карт для Minecraft: рельеф, биомы, растительность и структуры рисуются кистями, как в графическом редакторе, а затем экспортируются в готовый мир.
 
-WorldPainter Languages — форк, который добавляет к нему полноценную многоязычность и несколько собственных возможностей генерации. Текущий релиз — **3.0.0**, собран на базе **WorldPainter 2.27.1**.
+WorldPainter Languages — форк, который добавляет к нему полноценную многоязычность и несколько собственных возможностей генерации. Текущий релиз — **3.0.1**, собран на базе **WorldPainter 2.27.1**.
 
 Одиннадцать языков интерфейса — английский и десять переводов:
 

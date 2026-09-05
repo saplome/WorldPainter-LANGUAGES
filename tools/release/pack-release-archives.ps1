@@ -13,7 +13,7 @@
 [CmdletBinding()]
 param(
     [string]$ProjectRoot = '',
-    [string]$Version = '3.0.0',
+    [string]$Version = '3.0.1',
     [string]$OutputDir = '',
     [switch]$VerifyOnly
 )

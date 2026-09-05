@@ -19,8 +19,8 @@ param(
     [switch]$BuildInnoInstaller,
     [switch]$CreateDraftRelease,
     [switch]$OpenDraftRelease,
-    [string]$ReleaseTag = 'L3.0.0',
-    [string]$ReleaseTitle = 'WorldPainter Languages 3.0.0',
+    [string]$ReleaseTag = 'L3.0.1',
+    [string]$ReleaseTitle = 'WorldPainter Languages 3.0.1',
     [string]$ReleaseNotesFile = '',
     [string[]]$AdditionalDraftAsset = @(),
     [switch]$GenerateUpdateManifest,
@@ -36,12 +36,12 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 $ProductName = 'WorldPainter Languages'
-$ProductVersion = '3.0.0'
+$ProductVersion = '3.0.1'
 # Windows wants file/product versions as plain numbers, so this is simply $ProductVersion with a fourth component.
 # The release tag is 'L' + $ProductVersion: builds up to 2.27.0-L2.0.1 only ever looked for L followed by a number,
 # and without that letter they would never report a new release. The number itself continues the same line those
 # builds used - L1, L2.0.0, L2.0.1, then 3.0.0 - so they compare it correctly. Keep it monotonic across releases.
-$WindowsInstallerVersion = '3.0.0.0'
+$WindowsInstallerVersion = '3.0.1.0'
 $WindowsUpgradeUuid = 'd5984a7f-cb32-48c8-b6f1-97a3c4c0da44'
 # jpackage writes --vendor into CompanyName of both launchers and into the Publisher shown by
 # Windows in "Apps & features", so this is the author of the fork, not the product name.
@@ -366,7 +366,7 @@ function New-UpdaterStaging {
     # The updater has no counterpart in the original project, so its jar carries the fork alone,
     # without the Specification-* attributes the GUI jar uses for WorldPainter. Same reasoning as
     # Update-GuiJarManifest: metadata only, readable with
-    #   unzip -p wp-updater-3.0.0.jar META-INF/MANIFEST.MF
+    #   unzip -p wp-updater-3.0.1.jar META-INF/MANIFEST.MF
     $updaterManifestPath = Join-Path $StagingDir 'updater-manifest.mf'
     $updaterManifestLines = @()
     $updaterManifestLines += New-ManifestAttributeLines 'Implementation-Title' "$ProductName Updater"

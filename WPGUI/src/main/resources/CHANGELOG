@@ -5,6 +5,20 @@ The "WorldPainter Languages" entries below are the changes made by the fork, Cop
 (C) 2026 saplome. Everything from "Version 2.27.1" onwards is the original WorldPainter
 change log by pepsoft.org, The Netherlands, reproduced here unchanged.
 
+-- WorldPainter Languages 3.0.1, released 5-9-2026 (based on WorldPainter 2.27.1)
+
+ * The Java runtime shipped with the program is built from 21 modules instead of 65. The
+   compiler, javadoc, jshell, jlink, jpackage, the debugger agent, the incubator modules and
+   the locale data of every language in the world were never opened by WorldPainter and are
+   gone. Setup.exe is 45.8 MB instead of 58.4 MB, the portable build 56.0 MB instead of
+   77.1 MB, and the installed program takes 108 MB on disk instead of 163 MB
+ * Nothing the program does was removed: all eleven interface languages keep their own month
+   names and decimal separator, because the build reads the list of languages it has to keep
+   locale data for from languages.list
+ * An update replaces the files of the program only, so a copy updated from 3.0.0 keeps the
+   runtime it was installed with. The smaller runtime arrives with a fresh Setup.exe or a
+   fresh portable build
+
 -- WorldPainter Languages 3.0.0, released 5-9-2026 (based on WorldPainter 2.27.1)
 
  * Base updated to WorldPainter 2.27.1

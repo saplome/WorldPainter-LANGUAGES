@@ -287,7 +287,7 @@ public final class ForkUpdateChecker {
     private static final String LATEST_RELEASE_API = "https://api.github.com/repos/saplome/WorldPainter-LANGUAGES/releases/latest";
     private static final Logger logger = LoggerFactory.getLogger(ForkUpdateChecker.class);
     /** Version of this build, exactly as users see it and as the release tag spells it after the {@code L}. */
-    public static final String CURRENT_PRODUCT_VERSION = "3.0.0";
+    public static final String CURRENT_PRODUCT_VERSION = "3.0.1";
     /** The WorldPainter release this build is based on. Read from the code, so it cannot fall out of sync. */
     public static final String BASE_VERSION = baseVersion();
     private static final ProductVersion INSTALLED_VERSION = ProductVersion.parse(CURRENT_PRODUCT_VERSION);

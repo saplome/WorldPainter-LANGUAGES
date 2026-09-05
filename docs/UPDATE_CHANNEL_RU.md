@@ -7,7 +7,7 @@
 
 1. WorldPainter (класс `ForkUpdateChecker`) спрашивает у GitHub API последний релиз основного
    репозитория: `https://api.github.com/repos/saplome/WorldPainter-LANGUAGES/releases/latest`.
-   Из тега (`L3.0.0`) берётся номер версии и сравнивается с текущей. Номер версии обычный, буква
+   Из тега (`L3.0.1`) берётся номер версии и сравнивается с текущей. Номер версии обычный, буква
    `L` в теге нужна только для совместимости: сборки до `2.27.0-L2.0.1` искали в теге `L` и число
    за ней, поэтому без неё они бы не увидели релиз. Теги прошлых релизов в старом виде
    (`v2.27.0-L2.0.1`) тоже разбираются — из них берётся часть после `L`.
@@ -20,7 +20,7 @@
 
    ```
    format=1
-   version=3.0.0
+   version=3.0.1
    file=<sha256>	<размер>	<путь внутри app>	<полный URL файла>
    delete=<путь внутри app>
    ```
@@ -76,7 +76,7 @@ gh repo create saplome/WorldPainter-LANGUAGES-cdn --public --description "Update
 cd /c/WorldPainter-LANGUAGES-main/WorldPainter-Languages/release/cdn
 git init -b main
 git add -A
-git commit -m "WorldPainter Languages 3.0.0 app files"
+git commit -m "WorldPainter Languages 3.0.1 app files"
 git remote add origin https://github.com/saplome/WorldPainter-LANGUAGES-cdn.git
 git push -u origin main
 ```
@@ -96,8 +96,8 @@ git push -u origin main
 | --- | --- |
 | `release\cdn\` (`app/`, `.gitattributes`, `update-manifest.txt`) | коммит в `WorldPainter-LANGUAGES-cdn`, ветка `main` |
 | `release\update-manifest.txt` | ассет релиза |
-| `release\installer\WorldPainter-Languages-3.0.0-Setup.exe` | ассет релиза |
-| `release\WorldPainter-Languages-3.0.0-Portable.zip` | ассет релиза |
+| `release\installer\WorldPainter-Languages-3.0.1-Setup.exe` | ассет релиза |
+| `release\WorldPainter-Languages-3.0.1-Portable.zip` | ассет релиза |
 
 Архивов исходников среди ассетов нет: `Source code (zip)` и `Source code (tar.gz)` GitHub собирает из тега сам.
 
@@ -110,28 +110,28 @@ git push -u origin main
 
    ```bash
    cd /c/WorldPainter-LANGUAGES-main/WorldPainter-Languages/release/cdn
-   git add -A && git commit -m "WorldPainter Languages 3.0.0 app files" && git push
+   git add -A && git commit -m "WorldPainter Languages 3.0.1 app files" && git push
    ```
 
    Если репозиторий уже был склонирован раньше, замените в нём `app/` целиком (удалить старую папку,
    скопировать новую), чтобы исчезнувшие файлы попали в коммит как удаления.
 
-2. **Потом релиз** в основном репозитории — с тегом `L3.0.0`:
+2. **Потом релиз** в основном репозитории — с тегом `L3.0.1`:
 
    ```bash
    cd /c/WorldPainter-LANGUAGES-main/WorldPainter-Languages
-   gh release create L3.0.0 \
+   gh release create L3.0.1 \
      --repo saplome/WorldPainter-LANGUAGES \
-     --title "WorldPainter Languages 3.0.0" \
-     --notes-file docs/RELEASE_NOTES_3.0.0.md \
-     "release/installer/WorldPainter-Languages-3.0.0-Setup.exe" \
-     "release/WorldPainter-Languages-3.0.0-Portable.zip" \
+     --title "WorldPainter Languages 3.0.1" \
+     --notes-file docs/RELEASE_NOTES_3.0.1.md \
+     "release/installer/WorldPainter-Languages-3.0.1-Setup.exe" \
+     "release/WorldPainter-Languages-3.0.1-Portable.zip" \
      "release/update-manifest.txt"
    ```
 
    Черновик вместо публикации — добавить `--draft`; тогда `releases/latest` пока не меняется.
 
-3. Тег `L3.0.0` должен существовать в основном репозитории (`gh release create` создаст его
+3. Тег `L3.0.1` должен существовать в основном репозитории (`gh release create` создаст его
    из текущего коммита, если тега ещё нет).
 
 ## Шаг 4. Проверка после публикации
