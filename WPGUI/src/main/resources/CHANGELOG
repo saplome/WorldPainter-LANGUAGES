@@ -19,6 +19,17 @@ change log by pepsoft.org, The Netherlands, reproduced here unchanged.
  * The update check compares the whole version number instead of only its first component,
    so 3.0.0 is correctly recognised as newer than 2.0.1
  * Obsolete files from the previous release are removed during an update
+ * Error reports go to the issue tracker of the fork instead of by email to the author of
+   the original program: the button on the error dialog copies the report to the clipboard
+   and opens https://github.com/saplome/WorldPainter-LANGUAGES/issues. It is no longer
+   disabled on systems that do not report support for sending mail, and if no browser can
+   be opened the address of the tracker is shown instead
+ * The window title and the taskbar caption name the fork, with or without a world open.
+   In Belarusian, Kazakh, Russian and Ukrainian the space in that title is back: it used
+   to read "WorldPainter -World" with no gap
+ * LICENSE, NOTICE.md and CHANGELOG.md are shipped next to the program, in the installed
+   copy as well as in the portable build, and both launchers, Setup.exe and the updater jar
+   carry the same copyright line
 
 -- WorldPainter Languages 2.27.0-L2.0.1, released 28-7-2026
 
