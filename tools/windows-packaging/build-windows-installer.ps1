@@ -60,6 +60,9 @@ $MainClass = 'org.pepsoft.worldpainter.Main'
 $UpdaterMainClass = 'org.pepsoft.worldpainter.updater.WPUpdater'
 $JPackageEnabled = [bool]$BuildInstaller
 
+# The release is built and shipped on JDK 17: the tool check below refuses any other major version.
+$RequiredJdkMajor = 17
+
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $ProjectRoot = (Resolve-Path (Join-Path $ScriptDir '..\..')).Path
 $JPackageResourceDir = Join-Path $ScriptDir 'jpackage-resources\windows'
@@ -862,6 +865,31 @@ Test-Tool 'jar' 'Install a full JDK, not only a JRE, and check PATH.' -Required 
 Test-Tool 'javac' 'Install a full JDK, not only a JRE, and check PATH.' -Required | Out-Null
 Test-Tool 'mvn' 'Install Maven and check PATH.' -Required | Out-Null
 Test-Tool 'jpackage' 'Use a JDK distribution which includes jpackage.' -Required | Out-Null
+
+# The runtime baked into the release is the one belonging to whichever jpackage is found on PATH, and
+# bare tool names are resolved through PATH, not through JAVA_HOME. An ambient JDK of another major
+# version therefore produces a release around a runtime nobody chose, without a single warning.
+foreach ($jdkTool in @('jpackage', 'javac', 'jar')) {
+    $versionOutput = (& $jdkTool '--version' 2>&1 | Select-Object -First 1) -as [string]
+
+    if ($versionOutput -notmatch '(\d+)') {
+        Fail "Cannot read the version of '$jdkTool' from: $versionOutput"
+    }
+
+    $jdkMajor = [int]$Matches[1]
+    if ($jdkMajor -ne $RequiredJdkMajor) {
+        $toolPath = (Get-Command $jdkTool -ErrorAction SilentlyContinue).Source
+        Fail @"
+'$jdkTool' on PATH is JDK $jdkMajor ($toolPath), but this release is built with JDK $RequiredJdkMajor.
+Put the JDK $RequiredJdkMajor bin directory first on PATH in this shell, for example:
+    `$env:JAVA_HOME = 'C:\Program Files\Eclipse Adoptium\jdk-17.0.19.10-hotspot'
+    `$env:PATH = "`$env:JAVA_HOME\bin;" + `$env:PATH
+Setting JAVA_HOME alone changes nothing here: jpackage, javac and jar come from PATH.
+"@
+    }
+
+    Write-Host "  $jdkTool is JDK $jdkMajor"
+}
 
 if ($BuildInstaller) {
     $candleFound = Test-Tool 'candle.exe' 'Install WiX Toolset and add its bin directory to PATH.' -Required

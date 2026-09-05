@@ -14,6 +14,7 @@
 - Апдейтер ждёт завершения процесса WorldPainter (`--wait-pid`) и повторяет замену файла, пока Windows держит его открытым.
 - Протокол обновления пишется в `%LOCALAPPDATA%\WorldPainter Languages\updater.log`; после любой неудачи WorldPainter запускается снова.
 - Проверка согласованности версий в сценарии сборки: номер версии, тег релиза, версия для Windows, `pom.xml`, `ForkUpdateChecker.CURRENT_PRODUCT_VERSION`, `installer.iss` и файл release notes должны совпадать, иначе сборка прекращается.
+- Проверка версии JDK в сценарии сборки: `jpackage`, `javac` и `jar` должны быть из JDK 17. Среда исполнения внутри сборки берётся из того JDK, который нашёлся в `PATH`, а не из `JAVA_HOME`, поэтому установленный рядом JDK другой версии попадал в релиз молча.
 - Генерация CDN-payload для канала обновлений: `release/cdn/app/**`, `release/cdn/update-manifest.txt` и инструкция по публикации (`-GenerateUpdateManifest`).
 - Тест T7 в `tools/updater/test-updater-local.ps1`: апдейтер не пытается перезаписать jar, из которого запущен.
 - Публикация релиза черновиком: `publish-step2-release.sh --draft` создаёт релиз с ассетами и описанием, но тег и переключение `releases/latest` происходят только после ручного Publish.
