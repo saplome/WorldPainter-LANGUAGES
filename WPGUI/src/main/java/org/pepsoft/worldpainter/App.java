@@ -709,7 +709,7 @@ public final class App extends JFrame implements BrushControl,
         } else {
             view.setDimension(null);
             view.setBackgroundDimension(null, -1, null);
-            setTitle("WorldPainter"); // NOI18N
+            setTitle("WorldPainter Languages"); // NOI18N
 
             // Clear action states
             ACTION_GRID.setSelected(false);
