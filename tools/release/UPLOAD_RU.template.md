@@ -7,6 +7,13 @@
 ## 0. Один раз перед первым релизом
 
 - Нужны `gh` (GitHub CLI, с выполненным `gh auth login`), `git` и `curl` — всё это есть в Git Bash.
+- Скрипты здесь на bash: в PowerShell и `cmd` они не запустятся. Открыть Git Bash сразу в нужной
+  папке можно из PowerShell:
+
+```powershell
+& 'C:\Program Files\Git\git-bash.exe' --cd='@@UPLOAD_DIR_WIN@@'
+```
+
 - Все три скрипта запускаются из этой папки:
 
 ```bash

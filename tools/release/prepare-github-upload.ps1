@@ -505,6 +505,7 @@ foreach ($token in @(
     @{ Name = '@@CDN_REPO@@';    Value = $cdnRepository },
     @{ Name = '@@BASE_URL@@';    Value = $updateBaseUrl },
     @{ Name = '@@UPLOAD_DIR@@';  Value = (ConvertTo-BashPath $uploadDir) },
+    @{ Name = '@@UPLOAD_DIR_WIN@@'; Value = $uploadDir },
     @{ Name = '@@CDN_DIR@@';     Value = (ConvertTo-BashPath $cdnDir) },
     @{ Name = '@@SRC_DIR@@';     Value = (ConvertTo-BashPath $ProjectRoot) },
     @{ Name = '@@FILE_COUNT@@';  Value = [string]$cdnFileCount },
