@@ -22,6 +22,7 @@
 
 package org.pepsoft.worldpainter;
 
+import org.pepsoft.util.DesktopUtils;
 import org.pepsoft.util.mdc.MDCWrappingException;
 import org.pepsoft.util.mdc.MDCWrappingRuntimeException;
 import org.pepsoft.worldpainter.layers.Layer;
@@ -38,8 +39,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.image.ImagingOpException;
 import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.text.MessageFormat;
 import java.util.*;
 
@@ -138,17 +139,17 @@ public class ErrorDialog extends javax.swing.JDialog {
                     }
                 }
             } else {
-                jButton1.setText(org.pepsoft.worldpainter.WPI18n.s("ui.field.emailDetails"));
-                if ((! Desktop.isDesktopSupported()) || (! Desktop.getDesktop().isSupported(Desktop.Action.MAIL))) {
-                    jButton1.setToolTipText(org.pepsoft.worldpainter.WPI18n.s("ui.field.emailingNotSupportedOn"));
-                } else {
-                    jButton1.setEnabled(true);
-                }
+                // WorldPainter Languages: the report goes to the issue tracker of the fork instead of by email to the
+                // author of the original program. The button always works: it copies the details to the clipboard even
+                // if no browser can be opened, and DesktopUtils falls back to the platform "open" command when
+                // java.awt.Desktop is unavailable.
+                jButton1.setText(org.pepsoft.worldpainter.WPI18n.s("ui.field.reportOnGitHub"));
+                jButton1.setEnabled(true);
                 mode = Mode.REPORTING_DISABLED;
                 if (ioException) {
-                    requestedActionLine = org.pepsoft.worldpainter.WPI18n.s("ui.errorDialog.action.emailBug");
+                    requestedActionLine = org.pepsoft.worldpainter.WPI18n.s("ui.errorDialog.action.reportBug");
                 } else {
-                    requestedActionLine = org.pepsoft.worldpainter.WPI18n.s("ui.errorDialog.action.emailDebug");
+                    requestedActionLine = org.pepsoft.worldpainter.WPI18n.s("ui.errorDialog.action.reportDebug");
                 }
             }
             final String text;
@@ -294,26 +295,35 @@ public class ErrorDialog extends javax.swing.JDialog {
         dispose();
     }
 
-    private void email() {
+    /**
+     * WorldPainter Languages has no error collecting service of its own, and the details of an error in this fork are of
+     * no use to the author of the original program, so the report is not emailed to worldpainter@pepsoft.org any more.
+     * Instead it is copied to the clipboard and the issue tracker of the fork is opened; a GitHub issue cannot be filled
+     * in from a URL, and the report would be far too long for a query string anyway.
+     */
+    private void reportOnGitHub() {
+        copyDetailsToClipboard();
         try {
-            URI uri = new URI("mailto", "worldpainter@pepsoft.org?subject=" + org.pepsoft.worldpainter.WPI18n.s("ui.errorDialog.email.subject") + "&body=" + body, null);
-            Desktop desktop = Desktop.getDesktop();
-            desktop.mail(uri);
-            showInfo(this, org.pepsoft.worldpainter.WPI18n.s("ui.errorDialog.emailCreated.message"), org.pepsoft.worldpainter.WPI18n.s("ui.errorDialog.emailCreated.title"));
-        } catch (URISyntaxException e) {
-            logger.error("URI syntax error while trying to send email", e);
-            JOptionPane.showMessageDialog(this, org.pepsoft.worldpainter.WPI18n.s("ui.message.couldNotCreateEmail"), org.pepsoft.worldpainter.WPI18n.s("ui.dialog.couldNotCreateEmail.title"), JOptionPane.ERROR_MESSAGE);
-        } catch (IOException e) {
-            logger.error("I/O error while trying to send email", e);
-            JOptionPane.showMessageDialog(this, org.pepsoft.worldpainter.WPI18n.s("ui.message.couldNotCreateEmail"), org.pepsoft.worldpainter.WPI18n.s("ui.dialog.couldNotCreateEmail.title"), JOptionPane.ERROR_MESSAGE);
+            if (DesktopUtils.open(new URL(ISSUE_TRACKER_URL))) {
+                showInfo(this, MessageFormat.format(org.pepsoft.worldpainter.WPI18n.s("ui.errorDialog.reportOnGitHub.message"), ISSUE_TRACKER_URL), org.pepsoft.worldpainter.WPI18n.s("ui.errorDialog.reportOnGitHub.title"));
+                return;
+            }
+            logger.error("Could not open issue tracker {} in a browser", ISSUE_TRACKER_URL);
+        } catch (MalformedURLException e) {
+            logger.error("Malformed URL while trying to open issue tracker {}", ISSUE_TRACKER_URL, e);
         }
+        JOptionPane.showMessageDialog(this, MessageFormat.format(org.pepsoft.worldpainter.WPI18n.s("ui.message.couldNotOpenIssueTracker"), ISSUE_TRACKER_URL), org.pepsoft.worldpainter.WPI18n.s("ui.dialog.couldNotOpenIssueTracker.title"), JOptionPane.ERROR_MESSAGE);
     }
-    
+
     private void copyToClipboard() {
+        copyDetailsToClipboard();
+        showInfo(this, MessageFormat.format(org.pepsoft.worldpainter.WPI18n.s("ui.errorDialog.informationCopied.message"), ISSUE_TRACKER_URL), org.pepsoft.worldpainter.WPI18n.s("ui.errorDialog.informationCopied.title"));
+    }
+
+    private void copyDetailsToClipboard() {
         Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
         StringSelection data = new StringSelection(body);
         clipboard.setContents(data, data);
-        showInfo(this, org.pepsoft.worldpainter.WPI18n.s("ui.errorDialog.informationCopied.message"), org.pepsoft.worldpainter.WPI18n.s("ui.errorDialog.informationCopied.title"));
     }
 
     private void submitInBackground() {
@@ -339,12 +349,8 @@ public class ErrorDialog extends javax.swing.JDialog {
                     logger.error("{} while trying to submit exception report to server (message: {})", e.getClass().getSimpleName(), e.getMessage(), e);
                     doOnEventThread(() -> {
                         JOptionPane.showMessageDialog(ErrorDialog.this, org.pepsoft.worldpainter.WPI18n.s("ui.message.errorReportSubmitFailed"), org.pepsoft.worldpainter.WPI18n.s("information"), JOptionPane.INFORMATION_MESSAGE);
-                        jButton1.setText(org.pepsoft.worldpainter.WPI18n.s("ui.field.emailDetails"));
-                        if ((! Desktop.isDesktopSupported()) || (! Desktop.getDesktop().isSupported(Desktop.Action.MAIL))) {
-                            jButton1.setToolTipText(org.pepsoft.worldpainter.WPI18n.s("ui.field.emailingNotSupportedOn"));
-                        } else {
-                            jButton1.setEnabled(true);
-                        }
+                        jButton1.setText(org.pepsoft.worldpainter.WPI18n.s("ui.field.reportOnGitHub"));
+                        jButton1.setEnabled(true);
                         mode = Mode.REPORTING_DISABLED;
                         jButton2.setEnabled(true);
                     });
@@ -443,7 +449,7 @@ public class ErrorDialog extends javax.swing.JDialog {
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
         switch (mode) {
             case REPORTING_DISABLED:
-                email();
+                reportOnGitHub();
                 break;
             case SEND_MANUALLY:
                 submitInBackground();
@@ -471,6 +477,10 @@ public class ErrorDialog extends javax.swing.JDialog {
     private String body;
     private EventVO event;
     private Mode mode = Mode.REPORTING_UNNECESSARY;
+
+    /** WorldPainter Languages: where users of the fork report problems, instead of the email address of the author of
+     * the original program. */
+    private static final String ISSUE_TRACKER_URL = "https://github.com/saplome/WorldPainter-LANGUAGES/issues";
 
     private static final String[] SYSTEM_PROPERTIES = {
         "java.version",
