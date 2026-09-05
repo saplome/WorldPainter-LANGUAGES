@@ -63,6 +63,34 @@ $JPackageEnabled = [bool]$BuildInstaller
 # The release is built and shipped on JDK 17: the tool check below refuses any other major version.
 $RequiredJdkMajor = 17
 
+# Modules of the private runtime that jpackage builds into the release. WorldPainter runs from the class path, not as
+# a module, so jpackage cannot work out what it needs and links every module of the JDK instead: javac, javadoc,
+# jshell, jlink, jpackage itself, the JDWP debugger agent, the incubators and the locale data of every language on
+# earth. That is 134.7 MB of runtime for a program that uses 21 modules. The first group below is what jdeps reports
+# for app\lib\*.jar; the second is what no static analysis can see, because it is loaded reflectively or by name.
+$RuntimeModules = @(
+    # jdeps app\lib\*.jar
+    'java.base'
+    'java.compiler'
+    'java.desktop'
+    'java.management'
+    'java.naming'
+    'java.prefs'
+    'java.scripting'
+    'java.sql'
+    'jdk.dynalink'      # Nashorn compiles the scripts of the custom object layers with it
+    'jdk.unsupported'   # sun.misc.Unsafe, used by JIDE and by Guava
+    # Found by running the program against a trimmed runtime, not by reading the code.
+    'java.logging'      # logback writes through java.util.logging when a library asks for it
+    'java.xml'          # logback parses logback.xml
+    'jdk.accessibility' # the Windows screen reader bridge, loaded by java.desktop by name
+    'jdk.charsets'      # windows-1251 and KOI8-R: text files written by older Windows programs
+    'jdk.crypto.ec'     # ECDHE, without which the TLS handshake with GitHub fails: update check and updater
+    'jdk.localedata'    # month names and the decimal comma of every language the fork ships
+    'jdk.unsupported.desktop'
+    'jdk.zipfs'         # FileSystems.newFileSystem() on jar and zip files
+) -join ','
+
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $ProjectRoot = (Resolve-Path (Join-Path $ScriptDir '..\..')).Path
 $JPackageResourceDir = Join-Path $ScriptDir 'jpackage-resources\windows'
@@ -79,6 +107,7 @@ $GitHubRepository = 'saplome/WorldPainter-LANGUAGES'
 $DefaultReleaseNotesPath = Join-Path $ProjectRoot "docs\RELEASE_NOTES_$ProductVersion.md"
 $LogsDir = Join-Path $ReleaseDir 'logs'
 $UpdaterSourcePath = Join-Path $ProjectRoot 'tools\updater\WPUpdater.java'
+$LanguagesListPath = Join-Path $ProjectRoot 'WPGUI\src\main\resources\org\pepsoft\worldpainter\resources\languages.list'
 $UpdateLauncherPropsPath = Join-Path $StagingDir 'update-launcher.properties'
 $UpdateManifestPath = Join-Path $ReleaseDir 'update-manifest.txt'
 $CdnDir = Join-Path $ReleaseDir 'cdn'
@@ -166,6 +195,40 @@ function Invoke-Checked {
     if ($LASTEXITCODE -ne 0) {
         Fail "Command failed: $Tool $($Arguments -join ' ')"
     }
+}
+
+function Get-RuntimeLocales {
+    # Read from languages.list so that adding an interface language cannot silently leave its locale data out of the
+    # runtime: the language would show up in the menu, but with English month names and a dot for a decimal separator.
+    if (-not (Test-Path -LiteralPath $LanguagesListPath)) {
+        Fail "Language list was not found: $LanguagesListPath"
+    }
+
+    $tags = @()
+    foreach ($line in Get-Content -LiteralPath $LanguagesListPath -Encoding utf8) {
+        # '<tag> = <name as it appears in the menu>'. The optional '<tag>.font = ...' lines do not match, because the
+        # dot comes before the '=' sign, and neither do comments or blank lines.
+        if ($line -match '^\s*([A-Za-z]{2,3})\s*=') {
+            $tags += $Matches[1]
+        }
+    }
+    $tags = @($tags | Select-Object -Unique)
+
+    if ($tags.Count -lt 2) {
+        Fail "Could not read the interface languages from $LanguagesListPath. Found $($tags.Count) of them, expected at least two."
+    }
+
+    return ($tags -join ',')
+}
+
+function Get-JLinkOptions {
+    # Whatever is passed here replaces the options jpackage would otherwise give jlink on its own, so its four
+    # defaults are repeated verbatim. --include-locales keeps the locale data of the interface languages and drops
+    # everyone else's, which turns jdk.localedata from 22.4 MB into 3.0 MB.
+    $locales = Get-RuntimeLocales
+    Write-Host "  runtime locales: $locales"
+
+    return "--strip-native-commands --strip-debug --no-man-pages --no-header-files --include-locales=$locales"
 }
 
 function Find-ModuleJar {
@@ -486,6 +549,8 @@ function Invoke-JPackage {
         '--input', $AppDir,
         '--main-jar', $mainJarName,
         '--main-class', $MainClass,
+        '--add-modules', $RuntimeModules,
+        '--jlink-options', (Get-JLinkOptions),
         '--add-launcher', "WorldPainter-Update=$UpdateLauncherPropsPath",
         '--dest', $InstallerWorkDir,
         '--icon', $IconIcoPath,
@@ -560,6 +625,8 @@ function Invoke-JPackageAppImage {
         '--input', $AppDir,
         '--main-jar', $mainJarName,
         '--main-class', $MainClass,
+        '--add-modules', $RuntimeModules,
+        '--jlink-options', (Get-JLinkOptions),
         '--add-launcher', "WorldPainter-Update=$UpdateLauncherPropsPath",
         '--dest', $AppImageDir,
         '--icon', $IconIcoPath
