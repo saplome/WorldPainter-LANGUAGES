@@ -93,7 +93,7 @@ WorldPainter Languages — форк, который добавляет к нем
 | --- | --- |
 | `WorldPainter-Languages-<версия>-Setup.exe` | обычная установка в Windows: ярлыки, меню «Пуск», ассоциация `.world`. Рекомендуется большинству |
 | `WorldPainter-Languages-<версия>-Portable.zip` | распаковать в любую папку и запустить `WorldPainter Languages.exe` |
-| `WorldPainter-Languages-<версия>.zip` | исходный код |
+| `Source code (zip)` | исходный код: GitHub собирает архив из тега релиза |
 
 Java устанавливать не нужно: и установщик, и Portable несут собственную Java-среду.
 
@@ -124,7 +124,7 @@ powershell -ExecutionPolicy Bypass -File .\tools\windows-packaging\build-windows
 powershell -ExecutionPolicy Bypass -File .\tools\windows-packaging\build-windows-installer.ps1 -SkipMaven -BuildInstaller
 ```
 
-Чистый архив исходников содержит ядро, GUI, Dynmap previewer, все одиннадцать локалей, документацию и лицензии — без результатов сборки и релиз-кандидатов. Сценарии упаковки лежат в отдельном `release-tools.zip`: распакуйте его в корень проекта так, чтобы существовал путь `tools\windows-packaging\build-windows-installer.ps1`. В `github-ready.zip` они уже на месте. Перед пересборкой WorldPainter нужно закрыть.
+Сборка даёт ядро, GUI, Dynmap previewer и все одиннадцать локалей. Сценарии упаковки — `tools\windows-packaging\build-windows-installer.ps1` и `tools\release\` — лежат в репозитории, поэтому архива исходников релиза достаточно, чтобы собрать ту же самую сборку. Перед пересборкой WorldPainter нужно закрыть: Windows держит открытыми файлы работающего приложения.
 
 ## Документация
 

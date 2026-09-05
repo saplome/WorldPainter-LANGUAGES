@@ -294,14 +294,10 @@ if (-not $VerifyOnly) {
         Copy-Item -LiteralPath $path -Destination $assetsDir -Force
         Write-Host "  + $(Split-Path -Leaf $path)"
     }
-    $sourceArchives = @(Get-ChildItem -LiteralPath (Join-Path $releaseDir 'github') -Filter '*.zip' -File -ErrorAction SilentlyContinue)
-    foreach ($archive in $sourceArchives) {
-        Copy-Item -LiteralPath $archive.FullName -Destination $assetsDir -Force
-        Write-Host "  + $($archive.Name)"
-    }
-    if ($sourceArchives.Count -eq 0) {
-        Write-Host '  (no source archives; run tools\release\pack-release-archives.ps1 if the release should contain them)' -ForegroundColor DarkGray
-    }
+    # No hand-packed source archive is staged. GitHub builds "Source code (zip)" and
+    # "Source code (tar.gz)" from the tag itself and attaches them to every published release: that
+    # is the GPL v3 section 6 offer, it cannot drift away from the tag, and it costs no upload. Every
+    # packaging script under tools/ is committed, so that archive alone rebuilds the whole release.
     Write-Host "  staged in: $assetsDir"
 }
 

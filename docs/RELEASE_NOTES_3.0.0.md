@@ -56,10 +56,9 @@
 | --- | --- |
 | `WorldPainter-Languages-3.0.0-Setup.exe` | установка в Windows (Inno Setup, со встроенной Java 17) |
 | `WorldPainter-Languages-3.0.0-Portable.zip` | переносимая сборка со встроенной Java-средой |
-| `WorldPainter-Languages-3.0.0.zip` | исходный код без сценариев релизной упаковки |
-| `WorldPainter-Languages-3.0.0-github-ready.zip` | исходный код вместе с `tools/` — для прямого коммита в репозиторий |
-| `WorldPainter-Languages-3.0.0-release-tools.zip` | только `tools/`: сборка Portable, установщика и релизных архивов |
 | `update-manifest.txt` | манифест инкрементального обновления |
+
+Исходный код — в `Source code (zip)` и `Source code (tar.gz)`: GitHub собирает их из тега `L3.0.0`, поэтому они не могут разойтись с кодом релиза. Сценарии сборки Portable, установщика и релизных архивов лежат в репозитории (`tools/`) и попадают в этот же архив.
 
 ## Обновление с L2.0.1
 

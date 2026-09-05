@@ -36,9 +36,11 @@ powershell -ExecutionPolicy Bypass -File .\tools\windows-packaging\build-windows
 
 Подробности: `tools/updater/README.md`.
 
-## Чистые релизные архивы
+## Локальные архивы исходников
 
 `tools/release/pack-release-archives.ps1` собирает архивы исходников и отсекает лишнее: `target/`, корневой `release/`, `.git/`, IDE-файлы, `*.class`, `*.jar`, `*.exe`, `*.zip`, логи и временные файлы. Каталог `tools/release` — это исходники, он в архивы попадает.
+
+В релиз эти архивы не идут: `Source code (zip)` и `Source code (tar.gz)` GitHub собирает из тега сам, и разойтись с кодом релиза они не могут. Скрипт остался для локальных снимков и для проверок, которые он делает по пути.
 
 ```powershell
 .\tools\release\pack-release-archives.ps1 -VerifyOnly

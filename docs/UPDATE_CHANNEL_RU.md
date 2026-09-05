@@ -98,7 +98,8 @@ git push -u origin main
 | `release\update-manifest.txt` | ассет релиза |
 | `release\installer\WorldPainter-Languages-3.0.0-Setup.exe` | ассет релиза |
 | `release\WorldPainter-Languages-3.0.0-Portable.zip` | ассет релиза |
-| `release\github\*.zip` (архивы исходников, `tools\release\pack-release-archives.ps1`) | ассет релиза |
+
+Архивов исходников среди ассетов нет: `Source code (zip)` и `Source code (tar.gz)` GitHub собирает из тега сам.
 
 ## Шаг 3. Порядок публикации
 

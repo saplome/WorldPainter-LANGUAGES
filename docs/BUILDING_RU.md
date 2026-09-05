@@ -66,9 +66,11 @@ https://www.worldpainter.net/maven-repo/
 
 Убедитесь, что установлен JDK 17 и Maven видит правильный `JAVA_HOME`.
 
-## Разделение исходников и release tools
+## Сценарии упаковки
 
-`WorldPainter-Languages-3.0.0.zip` содержит чистые исходники без сценариев упаковки. `WorldPainter-Languages-3.0.0-release-tools.zip` содержит каталог `tools/`; распакуйте его в корень исходников перед сборкой Portable или установщика. GitHub-ready архив уже содержит `tools/` и предназначен для прямого коммита в репозиторий.
+Сценарии упаковки лежат в репозитории — `tools\windows-packaging\` и `tools\release\`, — поэтому `Source code (zip)` релиза (GitHub собирает его из тега) уже содержит всё для сборки Portable и установщика. Отдельных архивов с `tools/` в релизе больше нет.
+
+`tools\release\pack-release-archives.ps1` остался для локальных снимков исходников: он собирает `release\github\*.zip` без `target/`, `.git/` и результатов сборки. В релиз эти архивы не попадают.
 
 ## Релизная сборка
 
